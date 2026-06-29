@@ -1,20 +1,22 @@
 // Read/write the merchant's size chart in a SHOP metafield via the Admin API.
 //
-// Persistence = shop metafield `fit_confidence.size_chart` (type `json`).
-// We intentionally use a custom (merchant-owned) namespace rather than the
-// reserved `$app` namespace so the theme app extension can read it from Liquid
-// as `shop.metafields.fit_confidence.size_chart.value`. That read requires the
-// metafield DEFINITION to grant storefront read access, created idempotently by
-// ensureSizeChartDefinition() on admin load (no manual operator step needed).
+// Persistence = APP-OWNED shop metafield under the reserved namespace
+// `$app:fit_confidence`, key `size_chart` (type `json`). App-owned metafields
+// (reserved `$app` prefix) need NO access scope — Shopify removed the standalone
+// read/write_metafields scopes, and a custom (merchant-owned) namespace on SHOP
+// has no owner-type scope to request. The `$app:` prefix resolves to
+// `app--{app-id}--fit_confidence`; the theme app extension reads it in Liquid as
+//   shop.metafields["$app:fit_confidence"].size_chart.value
+// (Liquid can always read defined metafields, independent of storefront access).
 import { DEFAULT_CHART } from './default-chart.js';
 
-const NS = 'fit_confidence';
+const NS = '$app:fit_confidence';
 const KEY = 'size_chart';
 
-// ensureSizeChartDefinition(admin) -> void : idempotently create the metafield
-// definition so the value is readable from the storefront/theme via Liquid
-// (`shop.metafields.fit_confidence.size_chart`). Safe to call on every admin
-// load — a pre-existing definition returns a TAKEN userError, which we ignore.
+// ensureSizeChartDefinition(admin) -> void : idempotently create the app-owned
+// metafield definition so the value has a schema and is readable in Liquid.
+// Safe to call on every admin load — a pre-existing definition returns a TAKEN
+// userError, which we ignore.
 export async function ensureSizeChartDefinition(admin) {
   const res = await admin.graphql(
     `#graphql
@@ -32,7 +34,6 @@ export async function ensureSizeChartDefinition(admin) {
           key: KEY,
           type: 'json',
           ownerType: 'SHOP',
-          access: { storefront: 'PUBLIC_READ' },
         },
       },
     },

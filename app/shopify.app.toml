@@ -14,9 +14,10 @@ api_version = "2026-07"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-# write_metafields: admin saves the size chart to a shop metafield + creates its
-# storefront-readable definition. read is implied by write.
-scopes = "write_metafields"
+# No scopes needed: the app manages only the metafield + definition it OWNS
+# (fit_confidence.size_chart on SHOP). Shopify removed the standalone
+# read_metafields/write_metafields scopes; app-owned metafields need no scope.
+scopes = ""
 
 [auth]
 redirect_urls = [ "https://shopify.dev/apps/default-app-home/api/auth" ]
