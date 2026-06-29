@@ -154,14 +154,23 @@
           "id": "task-app-admin",
           "title": "Admin Polaris size-chart editor (metafield)",
           "requirements": ["Merchant edits chart in admin; stored in shop metafield; storefront widget uses it."],
-          "status": "not_started",
+          "status": "in_progress",
           "spec_ids": ["admin-size-chart-design"],
           "plan_ref": "docs/features/size-finder/plans/admin-size-chart.md",
           "review": { "rounds": 0, "max_rounds": 3, "last_result": null },
           "release": { "rounds": 0, "max_rounds": 3, "last_result": null },
-          "dod": [],
-          "evidence": [],
-          "notes": "Phase 2 / stretch — spec + plan + prototype ready; needs embedded Remix template."
+          "dod": [
+            { "criterion": "validateChart() pure validation, TDD (valid / min>max / missing-size / negative-NaN / non-array)", "met": true, "evidence": "app/app/size-chart.validate.{js,test.js}; npm test -> 16/16 green (5 new + 11 existing)" },
+            { "criterion": "recommendSize proven not hardcoded (custom-chart test)", "met": true, "evidence": "extensions/size-finder/assets/sizing.test.js 'uses a custom chart, not a hardcoded one'" },
+            { "criterion": "storefront theme block reads shop metafield with fallback to built-in default", "met": true, "evidence": "extensions/size-finder/blocks/size-finder.liquid emits shop.metafields.fit_confidence.size_chart.value + JSON.parse fallback to TSHIRT_CHART (Phase 1)" },
+            { "criterion": "admin<->storefront live demo: edit chart in admin -> metafield -> widget recommends differently", "met": false, "evidence": "BLOCKED on operator: needs embedded Remix scaffold + metafield definition with storefront read access" }
+          ],
+          "evidence": [
+            "app/app/size-chart.validate.{js,test.js} — validateChart TDD, npm test 16/16",
+            "app/app/size-chart.server.js + app/app/default-chart.js — readChart/writeChart via Admin metafieldsSet (prepared, awaits Remix admin runtime)",
+            "./init.sh -> RESULT: PASS (2026-06-29): npm test 16/16, shopify app build OK"
+          ],
+          "notes": "Phase 2 code-first DONE & verified: validateChart (TDD), server metafield modules prepared, theme block already reads metafield. REMAINING (operator-driven, needs `shopify auth login` + live store): (1) `shopify app init` Remix template re-scaffold; (2) admin Polaris route app/app/routes/app.size-chart.tsx wiring readChart/writeChart/validateChart; (3) metafield definition fit_confidence.size_chart (json) with storefront read access; (4) shopify app dev demo. Cannot move to 'passing' until the admin<->storefront demo is captured."
         }
       ]
     }
