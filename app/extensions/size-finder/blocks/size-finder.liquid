@@ -1,0 +1,86 @@
+{{ 'size-finder.css' | asset_url | stylesheet_tag }}
+
+<div class="sf-wrap">
+  <button type="button" class="sf-link" data-sf-open>📏 {{ block.settings.button_label | default: 'Find my size' }}</button>
+
+  <div class="sf-modal" data-sf-modal hidden role="dialog" aria-modal="true" aria-labelledby="sf-title-{{ block.id }}">
+    <div class="sf-card">
+      <h2 id="sf-title-{{ block.id }}">Find my size</h2>
+      <div class="sf-field"><label for="sf-h-{{ block.id }}">Height (cm)</label><input id="sf-h-{{ block.id }}" type="number" inputmode="numeric" value="170" data-sf-h aria-describedby="sf-err-{{ block.id }}"></div>
+      <div class="sf-field"><label for="sf-w-{{ block.id }}">Weight (kg)</label><input id="sf-w-{{ block.id }}" type="number" inputmode="numeric" value="65" data-sf-w aria-describedby="sf-err-{{ block.id }}"></div>
+      <div class="sf-field"><label for="sf-fit-{{ block.id }}">Fit</label>
+        <select id="sf-fit-{{ block.id }}" data-sf-fit>
+          <option value="slim">Slim</option>
+          <option value="regular" selected>Regular</option>
+          <option value="relaxed">Relaxed</option>
+        </select>
+      </div>
+      <button type="button" class="sf-btn sf-btn--block" data-sf-go>Recommend</button>
+      <p class="sf-error" data-sf-err role="alert" hidden></p>
+      <div class="sf-result" data-sf-result hidden>
+        <div class="sf-badge" data-sf-badge></div>
+        <p class="sf-reason" data-sf-reason></p>
+        <span class="sf-tag" data-sf-tag hidden>estimate</span>
+      </div>
+      <button type="button" class="sf-btn sf-btn--ghost" data-sf-close>Close</button>
+    </div>
+  </div>
+</div>
+
+<script type="application/json" data-sf-chart>
+  {{ shop.metafields.fit_confidence.size_chart.value }}
+</script>
+
+<script type="module">
+  import { recommendSize, TSHIRT_CHART } from "{{ 'sizing.js' | asset_url }}";
+
+  const root = document.currentScript.closest('.sf-wrap') || document;
+  const q = (sel) => root.querySelector(sel);
+
+  // Merchant-edited chart (metafield) with fallback to the built-in default.
+  let chart = TSHIRT_CHART;
+  try {
+    const raw = (root.querySelector('[data-sf-chart]')?.textContent || '').trim();
+    if (raw) { const parsed = JSON.parse(raw); if (Array.isArray(parsed) && parsed.length) chart = parsed; }
+  } catch (e) {}
+
+  const modal = q('[data-sf-modal]');
+  let last = null;
+  q('[data-sf-open]').addEventListener('click', () => { last = document.activeElement; modal.hidden = false; q('[data-sf-h]').focus(); });
+  q('[data-sf-close]').addEventListener('click', () => { modal.hidden = true; if (last) last.focus(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !modal.hidden) { modal.hidden = true; if (last) last.focus(); } });
+
+  q('[data-sf-go]').addEventListener('click', () => {
+    const err = q('[data-sf-err]'), res = q('[data-sf-result]'), tag = q('[data-sf-tag]');
+    err.hidden = true; res.hidden = true; tag.hidden = true;
+    try {
+      const rec = recommendSize({
+        height_cm: Number(q('[data-sf-h]').value),
+        weight_kg: Number(q('[data-sf-w]').value),
+        fit: q('[data-sf-fit]').value,
+      }, chart);
+      q('[data-sf-badge]').textContent = rec.size;
+      q('[data-sf-reason]').textContent = rec.reason;
+      tag.hidden = rec.exact;
+      res.hidden = false;
+    } catch (e) {
+      err.textContent = e.message;
+      err.hidden = false;
+    }
+  });
+</script>
+
+{% schema %}
+{
+  "name": "Size Finder",
+  "target": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "Button label",
+      "default": "Find my size"
+    }
+  ]
+}
+{% endschema %}
