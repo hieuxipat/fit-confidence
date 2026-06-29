@@ -5,10 +5,12 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT_DIR"
 
-# Replace these commands with the correct commands for your repository.
-INSTALL_CMD=(echo "TODO: replace with your install command, e.g. npm install")
-VERIFY_CMD=(echo "TODO: replace with your verification command, e.g. npm test")
-START_CMD=(echo "TODO: replace with your start command, e.g. npm run dev")
+# Install: nothing to fetch yet for the harness itself (no app dependencies).
+INSTALL_CMD=(echo "No external dependencies to install for the harness.")
+# Verify: run the real harness integrity check (artifacts, JSON schema, hook self-tests).
+VERIFY_CMD=(bash "$ROOT_DIR/scripts/verify-harness.sh")
+# Start: the harness has no long-running app; this is the entrypoint reminder.
+START_CMD=(echo "Harness has no app to start. Use the AGENTS.md workflow / slash-command flow.")
 
 echo "==> Working directory: $PWD"
 

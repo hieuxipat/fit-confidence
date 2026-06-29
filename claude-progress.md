@@ -2,10 +2,11 @@
 
 ## Current Verified State
 
-- Repository root: harness-agent
+- Repository root: harness-agent (remote: fit-confidence)
 - Standard startup path: `./init.sh`
-- Standard verification path: (define in init.sh, then record here)
-- Current highest-priority unfinished feature: example-001 (placeholder)
+- Standard verification path: `scripts/verify-harness.sh` (harness integrity check, 18 checks) — wired into `init.sh`
+- Last verification result: `./init.sh` -> RESULT: PASS (2026-06-29)
+- Current highest-priority unfinished feature: feat-flow / task-flow-idea (`/idea` command) — not started
 - Current blocker: none
 
 ## Session Log

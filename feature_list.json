@@ -1,31 +1,116 @@
 {
-  "project": "replace-with-project-name",
-  "last_updated": "2026-06-17",
+  "schema_version": 2,
+  "project": "harness-agent",
+  "last_updated": "2026-06-29",
   "rules": {
-    "single_active_feature": true,
+    "single_active_task": true,
     "passing_requires_evidence": true,
-    "do_not_skip_verification": true
+    "do_not_skip_verification": true,
+    "review_max_rounds": 3,
+    "release_max_rounds": 3
   },
-  "status_legend": {
-    "not_started": "Work has not begun.",
-    "in_progress": "The feature is the current active task.",
-    "blocked": "Work cannot continue until a documented blocker is resolved.",
-    "passing": "Required verification has passed and evidence is recorded."
+  "task_status_legend": {
+    "not_started": "Defined but not selected to run yet.",
+    "pending": "Selected/queued as the next task to run.",
+    "in_progress": "Currently being worked on (only one task at a time).",
+    "in_review": "Implementation done, going through the review loop.",
+    "blocked": "Cannot continue until a documented blocker is resolved.",
+    "failed": "Review/release loop exceeded max rounds without passing; stopped and reported.",
+    "passing": "All DoD met, required verification passed, evidence recorded."
   },
+  "definition_of_done": [
+    "Target behavior implemented.",
+    "Required verification ran and passed (./init.sh / scripts/verify-harness.sh).",
+    "Evidence recorded (command output, commit SHA, or file path) — not just a claim.",
+    "Repository remains restartable from ./init.sh.",
+    "Security guardrails in .claude/ were not weakened."
+  ],
   "features": [
     {
-      "id": "example-001",
-      "priority": 1,
-      "area": "replace-with-area",
-      "title": "Replace with the first user-visible feature",
-      "user_visible_behavior": "Describe what a user can observe when this feature works.",
-      "status": "not_started",
-      "verification": [
-        "List the concrete steps that prove the behavior.",
-        "Each step should be observable, not an internal assumption."
-      ],
-      "evidence": [],
-      "notes": "Delete this placeholder once real features are defined."
+      "id": "feat-security",
+      "title": "Security & guardrail layer",
+      "source_idea": null,
+      "tasks": [
+        {
+          "id": "task-security-001",
+          "title": "Permissions, dangerous-command hook, secret hooks, pre-commit guard",
+          "requirements": [
+            "Restrict tool permissions to an allow/ask/deny list and self-protect the config.",
+            "Block dangerous Bash commands before execution.",
+            "Warn on secrets in edited files and block committing secrets."
+          ],
+          "status": "passing",
+          "spec_ids": [],
+          "plan_ref": null,
+          "review": { "rounds": 0, "max_rounds": 3, "last_result": "n/a" },
+          "release": { "rounds": 0, "max_rounds": 3, "last_result": "n/a" },
+          "dod": [
+            { "criterion": "block-dangerous blocks 'rm -rf' (exit 2)", "met": true, "evidence": "scripts/verify-harness.sh self-test" },
+            { "criterion": "pre-commit detects sk_live_ token", "met": true, "evidence": "scripts/verify-harness.sh self-test" },
+            { "criterion": "settings.json deny self-protects hooks & settings", "met": true, "evidence": "commit 6848d99 .claude/settings.json" }
+          ],
+          "evidence": [
+            "commit 6848d99 — Add security guardrails",
+            "scripts/verify-harness.sh: RESULT PASS"
+          ],
+          "notes": "Derived from docs/lessions/lession-4 guardrail standards."
+        }
+      ]
+    },
+    {
+      "id": "feat-flow",
+      "title": "Auto-loop flow: /idea -> /spec -> /plan -> /work -> /review -> /release",
+      "source_idea": null,
+      "tasks": [
+        {
+          "id": "task-flow-phase0",
+          "title": "Phase 0: real init.sh verification + hierarchical state schema",
+          "requirements": [
+            "init.sh runs a real, runnable verification (not placeholders).",
+            "feature_list.json supports feature -> task hierarchy with status, dod, evidence, review/release rounds."
+          ],
+          "status": "passing",
+          "spec_ids": [],
+          "plan_ref": null,
+          "review": { "rounds": 0, "max_rounds": 3, "last_result": "n/a" },
+          "release": { "rounds": 0, "max_rounds": 3, "last_result": "n/a" },
+          "dod": [
+            { "criterion": "./init.sh runs scripts/verify-harness.sh and it passes", "met": true, "evidence": "./init.sh -> RESULT: PASS (18 checks)" },
+            { "criterion": "feature_list.json validates against the schema", "met": true, "evidence": "verify-harness.sh: 'feature_list.json matches schema'" }
+          ],
+          "evidence": [
+            "./init.sh exit 0, RESULT: PASS — harness is healthy",
+            "scripts/verify-harness.sh, init.sh wired to it"
+          ],
+          "notes": "Orchestration approach chosen: agent-driven orchestrator."
+        },
+        {
+          "id": "task-flow-idea",
+          "title": "/idea command: research, analyze, ask clarifying questions, split into tasks",
+          "requirements": ["Turn a user request into confirmed, grouped tasks written into state."],
+          "status": "not_started",
+          "spec_ids": [],
+          "plan_ref": null,
+          "review": { "rounds": 0, "max_rounds": 3, "last_result": null },
+          "release": { "rounds": 0, "max_rounds": 3, "last_result": null },
+          "dod": [],
+          "evidence": [],
+          "notes": ""
+        },
+        {
+          "id": "task-flow-loop",
+          "title": "/spec /plan /work /review (loop <=3) /release commands + orchestrator",
+          "requirements": ["Chain stages; review/release loop until pass or max 3 rounds then stop and report."],
+          "status": "not_started",
+          "spec_ids": [],
+          "plan_ref": null,
+          "review": { "rounds": 0, "max_rounds": 3, "last_result": null },
+          "release": { "rounds": 0, "max_rounds": 3, "last_result": null },
+          "dod": [],
+          "evidence": [],
+          "notes": ""
+        }
+      ]
     }
   ]
 }
