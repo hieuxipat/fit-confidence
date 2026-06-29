@@ -154,7 +154,7 @@
           "id": "task-app-admin",
           "title": "Admin Polaris size-chart editor (metafield)",
           "requirements": ["Merchant edits chart in admin; stored in shop metafield; storefront widget uses it."],
-          "status": "in_progress",
+          "status": "passing",
           "spec_ids": ["admin-size-chart-design"],
           "plan_ref": "docs/features/size-finder/plans/admin-size-chart.md",
           "review": { "rounds": 0, "max_rounds": 3, "last_result": null },
@@ -165,15 +165,17 @@
             { "criterion": "storefront theme block reads shop metafield with fallback to built-in default", "met": true, "evidence": "extensions/size-finder/blocks/size-finder.liquid emits shop.metafields.fit_confidence.size_chart.value + JSON.parse fallback to TSHIRT_CHART (Phase 1)" },
             { "criterion": "embedded React Router app scaffolded + consolidated (theme extension + size-chart modules under one app)", "met": true, "evidence": "commit b504597; app/ is the embedded RR app; shopify app build OK; npm test 16/16" },
             { "criterion": "admin Polaris route edits chart, validates, saves to metafield; storefront-readable definition auto-created", "met": true, "evidence": "app/app/routes/app.size-chart.jsx + ensureSizeChartDefinition (storefront PUBLIC_READ); GraphQL validated vs Admin schema; react-router build compiles route (20 modules)" },
-            { "criterion": "admin<->storefront live demo: edit chart in admin -> metafield -> widget recommends differently", "met": false, "evidence": "PENDING operator: run `shopify app dev` against dev store, edit M range, Save, confirm storefront widget changes + capture demo" }
+            { "criterion": "admin<->storefront live demo: edit chart in admin -> metafield -> widget recommends differently", "met": true, "evidence": "Verified live on hieu-test-app-1.myshopify.com: admin Size chart Save -> toast; storefront 'Find my size' modal -> recommendation reflects edits. Deployed version fit-confidence-2." },
+            { "criterion": "live bugs found & fixed during demo (3): empty ShopId query (single-line #graphql), dead modal (document.currentScript null in module), theme-check LiquidHTMLSyntaxError (literal <script in comment)", "met": true, "evidence": "commits fe16040, 8edac72, 94ef60f; regression test app/app/size-chart.server.test.js; npm test 17/17" }
           ],
           "evidence": [
-            "app/app/size-chart.validate.{js,test.js} — validateChart TDD, npm test 16/16",
-            "app/app/size-chart.server.js (ensureSizeChartDefinition/readChart/writeChart, Admin GraphQL validated) + app/app/default-chart.js",
-            "app/app/routes/app.size-chart.jsx — Polaris web-components editor; app.jsx nav; shopify.app.toml scopes=write_metafields",
-            "commits b504597 (re-scaffold/consolidate) + <feat admin route>; react-router build OK; ./init.sh RESULT: PASS, npm test 16/16, shopify app build OK"
+            "app/app/size-chart.validate.{js,test.js} — validateChart TDD; app/app/size-chart.server.test.js GraphQL regression; npm test 17/17",
+            "app/app/size-chart.server.js (ensureSizeChartDefinition/readChart/writeChart on app-owned $app:fit_confidence, Admin GraphQL validated) + app/app/default-chart.js",
+            "app/app/routes/app.size-chart.jsx — Polaris web-components editor; app.jsx nav",
+            "Deployed fit-confidence-2; verified live on hieu-test-app-1: admin Save -> toast; storefront 'Find my size' modal reflects edits",
+            "commits b504597 (re-scaffold) + 9193bb8 (admin route) + 2b4ec4e (app-owned namespace) + fe16040/8edac72/94ef60f (live bug fixes)"
           ],
-          "notes": "Phase 2 implementation COMPLETE & build-verified: embedded React Router app (re-scaffolded via `shopify app init`, connected to existing Fit Confidence app, flattened to app/), admin Polaris size-chart editor, idempotent storefront-readable metafield definition, theme block reads it with fallback. ONLY REMAINING = the live admin<->storefront demo, which needs the operator to run `shopify app dev` against the dev store (auth + running tunnel). Stays in_progress until that demo is captured; then -> passing. If the dev run errors on access scope, confirm scopes=write_metafields took effect (re-grant on next `shopify app dev`)."
+          "notes": "Phase 2 DONE & verified live end-to-end. Embedded React Router app (re-scaffolded via `shopify app init`, connected to existing Fit Confidence app, flattened to app/); admin Polaris size-chart editor; chart persisted in APP-OWNED metafield $app:fit_confidence (no DB, no access scope — Shopify removed write_metafields; merchant-owned SHOP namespace has no owner scope); theme block reads shop.metafields[\"$app:fit_confidence\"].size_chart.value with fallback. Three live bugs found+fixed during demo: (1) ShopId query fully commented out by single-line #graphql; (2) modal dead because document.currentScript is null in module scripts; (3) theme-check LiquidHTMLSyntaxError from literal <script in a JS comment. Deployed as fit-confidence-2 (storefront widget runs on Shopify CDN, no server needed; embedded admin needs `shopify app dev`/hosting)."
         }
       ]
     }

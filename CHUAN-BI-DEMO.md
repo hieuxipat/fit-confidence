@@ -2,7 +2,7 @@
 
 **Deadline:** 14h Thứ Ba 30/06 (submit Form)
 **Repo:** https://github.com/hieuxipat/fit-confidence
-**Trạng thái hiện tại:** ✅ Harness + guardrails + feature map + prototype + **Phase 1 app MVP (recommendSize TDD + theme app block)** + **RELEASED** (version `fit-confidence-1` Active) + **Phase 2 admin BUILT & RUNNING** (embedded React Router app + trang Polaris sửa size chart + app-owned metafield, chạy live qua `shopify app dev`) · ⬜ Còn lại: quay clip demo admin↔storefront + slide + submit.
+**Trạng thái hiện tại:** ✅ Harness + guardrails + feature map + prototype + **Phase 1 (recommendSize TDD + theme app block)** + **Phase 2 admin (embedded React Router app + trang Polaris sửa size chart + app-owned metafield)** — **đã DEMO LIVE end-to-end** trên `hieu-test-app-1` (admin Save ↔ storefront widget) + **DEPLOYED** version `fit-confidence-2`. Trong lúc demo đã **fix 3 bug thật** (chi tiết ở Phần D5). · ⬜ Còn lại: quay clip demo + slide + submit.
 
 > **Tư duy của tài liệu này:** không "làm app rồi nghĩ xem áp dụng gì". Đi ngược lại — mỗi phần trình bày đã map sẵn với một việc THẬT + một mảng kiến thức khóa học. Phần lớn evidence cho phần "phương pháp/harness" **đã nằm trong git history rồi**; việc còn lại là build phần app để có evidence cho TDD + Verification + demo chạy được.
 
@@ -128,7 +128,7 @@ Flow nhỏ nhất demo được end-to-end: *"Buyer: find size"* bám các hub f
 | **A. Quay clip demo** | Save chart trong admin → toast → storefront widget đổi gợi ý (admin↔storefront); + 1 case validation banner | L3 (Verification) |
 | **B. Slide 6 phần + submit** (sáng T3 30/06) | Video 2–3', slide, submit Form | L7 |
 
-> ⏱️ App đang chạy live qua `shopify app dev` — trang Size chart render đúng. **Chỉ cần quay lại thao tác Save→storefront là trọn evidence.** Khi `task-app-admin` có clip demo → flip sang `passing`.
+> ✅ Đã verify live end-to-end trên `hieu-test-app-1` (admin Save ↔ storefront widget) → `task-app-admin` = **passing**, deployed `fit-confidence-2`. **Chỉ còn quay lại thành clip + dựng slide.**
 
 ---
 
@@ -142,14 +142,19 @@ Flow nhỏ nhất demo được end-to-end: *"Buyer: find size"* bám các hub f
 
 **3️⃣ AI hỗ trợ phần nào** — AI giúp: research, brainstorm plan, generate widget, viết test, debug; **tôi giữ vai PM + reviewer** (quyết hướng, review code, dựng guardrails để AI không phá). *Show:* 1 ReAct loop (đọc file → sửa → chạy test) + hook chặn `rm -rf` live. 🏷️ *Harness tool-use loop, đổi vai coder → PM.*
 
-**4️⃣ Kết quả đạt được** — *Show demo live/video:* (a) storefront 170cm/65kg → "M" + lý do; (b) **admin↔storefront**: sửa chart trong trang Polaris **Size chart** → Save → widget storefront gợi ý size khác. *Số liệu thật:* **16/16 test xanh** (recommendSize 11 + validateChart 5), `shopify app build` OK, `react-router build` compile route admin, `./init.sh` → **RESULT: PASS**, **Phase 1 RELEASED** (version `fit-confidence-1` Active), **Phase 2 admin chạy live** qua `shopify app dev`. 🏷️ *Verification (evidence = raw output), TDD, Shopify app thật (storefront + admin), Custom Data (metafield không DB).*
+**4️⃣ Kết quả đạt được** — *Show demo live/video* (đã verify thật trên `hieu-test-app-1`): (a) storefront 170cm/65kg → "M" + lý do; (b) **admin↔storefront**: sửa chart trong trang Polaris **Size chart** → Save (toast) → widget storefront gợi ý size khác. *Số liệu thật:* **17/17 test xanh** (recommendSize 11 + validateChart 5 + GraphQL regression 1), `shopify app build` OK (theme check sạch), `react-router build` compile route admin, `./init.sh` → **RESULT: PASS**, **DEPLOYED** version `fit-confidence-2` (storefront widget chạy trên CDN Shopify, không cần server). 🏷️ *Verification (evidence = raw output), TDD, Shopify app thật (storefront + admin), Custom Data (metafield không DB), Systematic Debugging (3 bug live).*
 
 **5️⃣ Khó khăn & cách xử lý** (chọn 2–3):
 - AI **bịa công thức sizing** → verify bằng size chart thật + test khóa.
 - Feature map 31 feature rating "Complex" → **cắt scope** về 4 hub.
 - Lo agent chạy lệnh nguy hiểm / lộ secret → **dựng hooks + pre-commit guard** (chặn `rm -rf`, secret).
 - Skill `design-prototype` khóa vào **Polaris/Admin** → KHÔNG hợp **storefront widget** → nhận ra & **tự author prototype storefront** thay vì ép sai tool.
-- **Phase 2 — metafield ownership/scope** (ca debug đắt giá nhất): thêm `scopes = write_metafields` → `shopify app dev` báo *"These scopes are invalid"* (Shopify đã bỏ scope đó). Tra docs → hiểu **merchant-owned namespace cần scope, app-owned (`$app`) thì không** → đổi sang reserved namespace `$app:fit_confidence`, theme đọc `shop.metafields["$app:fit_confidence"]…`. Dùng **MCP skills** `shopify-admin`/`shopify-custom-data` validate GraphQL vs schema trước khi chạy. 🏷️ *Systematic Debugging, MCP/Custom Data, đọc docs thay vì đoán.* 🏷️ *Guardrails, Planning (cắt scope), chọn đúng tool.*
+- **Phase 2 — metafield ownership/scope** (ca debug đắt giá nhất): thêm `scopes = write_metafields` → `shopify app dev` báo *"These scopes are invalid"* (Shopify đã bỏ scope đó). Tra docs → hiểu **merchant-owned namespace cần scope, app-owned (`$app`) thì không** → đổi sang reserved namespace `$app:fit_confidence`, theme đọc `shop.metafields["$app:fit_confidence"]…`. Dùng **MCP skills** `shopify-admin`/`shopify-custom-data` validate GraphQL vs schema trước khi chạy.
+- **3 bug thật bắt được khi demo live** (kể như minh chứng "đọc lỗi → root cause → fix → regression test", KHÔNG đoán mò):
+  1. **Save báo Application Error** → đọc stack trace → query lấy shop id viết 1 dòng `#graphql query…`; `#` comment hết dòng nên query rỗng → Shopify "syntax error, unexpected end of file". Tách xuống dòng + **thêm regression test** strip comment. (`fe16040`)
+  2. **Nút "Find my size" bấm không ra modal** → `document.currentScript` = `null` trong `<script type=module>` → `.closest()` ném lỗi, cả module crash trước khi gắn listener → đổi sang `getElementById("sf-wrap-{block.id}")`. (`8edac72`)
+  3. **theme-check `LiquidHTMLSyntaxError`** khi deploy → comment JS chứa literal `<script…>` làm parser tưởng thẻ chưa đóng → sửa câu comment. (`94ef60f`)
+  🏷️ *Systematic Debugging (6 bước), MCP/Custom Data, đọc docs/stack trace thay vì đoán.* 🏷️ *Guardrails, Planning (cắt scope), chọn đúng tool.*
 
 **6️⃣ Bài học rút ra** — (1) Áp dụng kiến thức TỪ khâu chọn đề tài. (2) Plan kỹ + có test → AI nhanh & đáng tin hơn. (3) Harness + guardrails giữ AI không đi lạc/không phá. (4) Done = có evidence (commit + raw output), không phải AI nói xong. 🏷️ *Tổng kết: tư duy Harness Engineer.*
 
@@ -181,7 +186,8 @@ Flow nhỏ nhất demo được end-to-end: *"Buyer: find size"* bám các hub f
 - [x] Phase 0 (init.sh verify + schema) đã commit
 - [x] Phase 1: `recommendSize()` test RED→GREEN + theme app block + RELEASED (`fit-confidence-1`)
 - [x] Phase 2: embedded React Router app + trang Polaris sửa chart + `validateChart` TDD + app-owned metafield
-- [x] `./init.sh` ra raw output (test 16/16 + build + harness PASS) — evidence
+- [x] Demo LIVE end-to-end trên `hieu-test-app-1` + **deployed `fit-confidence-2`** + fix 3 bug live
+- [x] `./init.sh` ra raw output (test 17/17 + build + harness PASS) — evidence
 - [ ] **Quay clip demo admin↔storefront** (Save chart → widget đổi) + 1 case validation
 - [ ] Slide 6 phần
 - [ ] Đính `CLAUDE.md` + `AGENTS.md` + feature map khi submit
