@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>fit-confidence — Size chart (admin prototype)</title>
+<!--
+  UI SOURCE OF TRUTH for the embedded-admin Size Chart editor (Polaris look, CSS mode / offline).
+  Hand-authored from ../specs/admin-size-chart-design.md. The real Remix+Polaris route
+  (admin-size-chart.md Task 4) must look visually equivalent. Validation JS mirrors validateChart.
+-->
+<style>
+  :root{
+    --bg:#f1f1f1; --surface:#fff; --text:#303030; --subdued:#616161; --border:#e3e3e3;
+    --primary:#303030; --primary-hover:#1a1a1a; --focus:#005bd3;
+    --crit-bg:#fdeded; --crit-border:#e0b3b2; --crit-text:#8e1f0b;
+    --radius:12px; --shadow:0 1px 0 rgba(0,0,0,.05),0 1px 3px rgba(0,0,0,.08);
+  }
+  *{box-sizing:border-box;font-family:Inter,-apple-system,system-ui,"Segoe UI",sans-serif;}
+  body{margin:0;background:var(--bg);color:var(--text);font-size:14px;line-height:1.4;}
+  .topbar{height:56px;background:#1a1a1a;display:flex;align-items:center;padding:0 16px;color:#e3e3e3;font-weight:600;gap:8px;}
+  .topbar .dot{width:20px;height:20px;border-radius:6px;background:linear-gradient(135deg,#5b8def,#9b6df0);}
+  .page{max-width:800px;margin:24px auto;padding:0 16px;}
+  .page__head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px;}
+  .page__title{font-size:20px;font-weight:650;margin:0;}
+  .page__sub{color:var(--subdued);margin:2px 0 0;font-size:13px;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
+  .card__head{padding:16px 20px;border-bottom:1px solid var(--border);font-weight:600;}
+  .card__body{padding:8px 20px 20px;}
+  table{width:100%;border-collapse:collapse;}
+  th,td{padding:10px 8px;text-align:left;}
+  th{font-size:12px;color:var(--subdued);font-weight:600;border-bottom:1px solid var(--border);}
+  td{border-bottom:1px solid #f1f1f1;}
+  .size-badge{display:inline-block;min-width:34px;text-align:center;padding:2px 8px;border-radius:8px;background:#eef1f6;font-weight:650;}
+  input[type=number]{width:84px;padding:7px 8px;border:1px solid #8a8a8a;border-radius:8px;font-size:14px;}
+  input[type=number]:focus{outline:2px solid var(--focus);outline-offset:0;border-color:var(--focus);}
+  input.invalid{border-color:var(--crit-border);background:var(--crit-bg);}
+  .btn{border:0;border-radius:8px;padding:9px 16px;font-size:14px;font-weight:600;cursor:pointer;}
+  .btn--primary{background:var(--primary);color:#fff;}
+  .btn--primary:hover{background:var(--primary-hover);}
+  .btn--secondary{background:#fff;color:var(--text);border:1px solid #b5b5b5;}
+  .btn--secondary:hover{background:#f7f7f7;}
+  .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;}
+  .banner{display:flex;gap:10px;align-items:flex-start;border-radius:12px;padding:12px 14px;margin-bottom:16px;
+    background:var(--crit-bg);border:1px solid var(--crit-border);color:var(--crit-text);}
+  .banner[hidden]{display:none;}
+  .banner__icon{flex:none;width:20px;height:20px;border-radius:50%;background:var(--crit-text);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;}
+  .banner__title{font-weight:650;margin:0 0 4px;}
+  .banner ul{margin:0;padding-left:18px;}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#303030;color:#fff;
+    padding:11px 18px;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,.25);font-weight:550;opacity:0;transition:opacity .2s;}
+  .toast.show{opacity:1;}
+  .hint{color:var(--subdued);font-size:12px;margin-top:12px;}
+</style>
+</head>
+<body>
+  <div class="topbar"><span class="dot"></span> fit-confidence · Shopify admin</div>
+
+  <main class="page">
+    <div class="page__head">
+      <div>
+        <h1 class="page__title">Size chart</h1>
+        <p class="page__sub">Edit the height &amp; weight ranges the Size Finder uses to recommend a size.</p>
+      </div>
+      <button class="btn btn--primary" id="save-top">Save</button>
+    </div>
+
+    <div class="banner" id="banner" role="alert" hidden>
+      <span class="banner__icon">!</span>
+      <div>
+        <p class="banner__title">Couldn't save the size chart</p>
+        <ul id="banner-list"></ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card__head">T-shirt size chart</div>
+      <div class="card__body">
+        <table>
+          <thead>
+            <tr>
+              <th>Size</th>
+              <th>Height min (cm)</th>
+              <th>Height max (cm)</th>
+              <th>Weight min (kg)</th>
+              <th>Weight max (kg)</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+        <p class="hint">All four sizes are required. Each row must have min ≤ max and positive numbers.</p>
+        <div class="actions">
+          <button class="btn btn--secondary" id="reset">Reset to default</button>
+          <button class="btn btn--primary" id="save">Save</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="toast" id="toast">Size chart saved</div>
+
+<script>
+const DEFAULT_CHART = [
+  { size: 'S',  height_min: 158, height_max: 167, weight_min: 50, weight_max: 60 },
+  { size: 'M',  height_min: 167, height_max: 176, weight_min: 60, weight_max: 72 },
+  { size: 'L',  height_min: 176, height_max: 184, weight_min: 72, weight_max: 84 },
+  { size: 'XL', height_min: 184, height_max: 193, weight_min: 84, weight_max: 96 },
+];
+const FIELDS = ['height_min', 'height_max', 'weight_min', 'weight_max'];
+const SIZES = ['S', 'M', 'L', 'XL'];
+
+// Mirror of validateChart (real one is TDD'd in app/app/size-chart.validate.js)
+function validateChart(chart) {
+  const errors = [];
+  for (const s of SIZES) if (!chart.some(r => r.size === s)) errors.push(`Missing size ${s}`);
+  for (const row of chart) {
+    for (const k of FIELDS) if (!Number.isFinite(row[k]) || row[k] <= 0) errors.push(`${row.size}: ${k.replace('_',' ')} must be a positive number`);
+    if (row.height_min > row.height_max) errors.push(`${row.size}: height min is greater than height max`);
+    if (row.weight_min > row.weight_max) errors.push(`${row.size}: weight min is greater than weight max`);
+  }
+  return { ok: errors.length === 0, errors };
+}
+
+const $ = (id) => document.getElementById(id);
+const rowsEl = $('rows');
+
+function render(chart) {
+  rowsEl.innerHTML = '';
+  chart.forEach((row) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td><span class="size-badge">${row.size}</span></td>` +
+      FIELDS.map(k => `<td><input type="number" data-size="${row.size}" data-key="${k}" value="${row[k]}"></td>`).join('');
+    rowsEl.appendChild(tr);
+  });
+}
+
+function readTable() {
+  const map = {};
+  rowsEl.querySelectorAll('input').forEach((i) => {
+    const s = i.dataset.size; map[s] = map[s] || { size: s };
+    map[s][i.dataset.key] = i.value === '' ? NaN : Number(i.value);
+  });
+  return SIZES.map(s => map[s]).filter(Boolean);
+}
+
+function clearInvalid() { rowsEl.querySelectorAll('input').forEach(i => i.classList.remove('invalid')); }
+
+function save() {
+  clearInvalid();
+  const chart = readTable();
+  const { ok, errors } = validateChart(chart);
+  const banner = $('banner');
+  if (!ok) {
+    $('banner-list').innerHTML = errors.map(e => `<li>${e}</li>`).join('');
+    banner.hidden = false;
+    // mark offending min/max inputs
+    chart.forEach(r => {
+      if (r.height_min > r.height_max) rowsEl.querySelectorAll(`input[data-size="${r.size}"][data-key^="height"]`).forEach(i=>i.classList.add('invalid'));
+      if (r.weight_min > r.weight_max) rowsEl.querySelectorAll(`input[data-size="${r.size}"][data-key^="weight"]`).forEach(i=>i.classList.add('invalid'));
+    });
+    return;
+  }
+  banner.hidden = true;
+  const t = $('toast'); t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+$('save').addEventListener('click', save);
+$('save-top').addEventListener('click', save);
+$('reset').addEventListener('click', () => { render(structuredClone(DEFAULT_CHART)); $('banner').hidden = true; clearInvalid(); });
+
+render(structuredClone(DEFAULT_CHART));
+</script>
+</body>
+</html>
