@@ -1,0 +1,38 @@
+#!/bin/bash
+# pre-commit — chặn commit nếu nội dung staged lộ secret. Mạnh hơn PostToolUse:
+# secret bị chặn TRƯỚC khi vào lịch sử git (nơi rất khó xoá sạch về sau).
+#
+# Kích hoạt: git config core.hooksPath .githooks   (init.sh tự làm việc này).
+# Bypass khi chắc chắn false-positive (dùng dè dặt): git commit --no-verify
+set -uo pipefail
+
+# Chỉ quét DÒNG ĐƯỢC THÊM trong commit này (bỏ qua dòng xoá và header diff).
+# Loại trừ chính bộ công cụ bảo mật — các file này CỐ Ý chứa pattern mẫu.
+ADDED=$(git diff --cached --no-color --diff-filter=ACM -U0 \
+          -- . ':(exclude).githooks/**' ':(exclude).claude/hooks/**' \
+        | grep -E '^\+' | grep -vE '^\+\+\+' || true)
+
+[ -z "$ADDED" ] && exit 0
+
+# Pattern secret thật, cụ thể để tránh báo nhầm.
+PATTERN='sk_live_[0-9A-Za-z]+'
+PATTERN+='|AKIA[0-9A-Z]{16}'
+PATTERN+='|gh[pousr]_[0-9A-Za-z]{20,}'
+PATTERN+='|xox[baprs]-[0-9A-Za-z-]{10,}'
+PATTERN+='|-----BEGIN (RSA|OPENSSH|EC|DSA|PGP) PRIVATE KEY-----'
+PATTERN+='|(api|secret)[_-]?key[[:space:]]*[:=][[:space:]]*["'"'"']?[0-9A-Za-z._-]{12,}'
+PATTERN+='|password[[:space:]]*[:=][[:space:]]*["'"'"']?[^[:space:]"'"'"']{6,}'
+PATTERN+='|postgres(ql)?://[^[:space:]:]+:[^[:space:]@]+@'
+
+HITS=$(echo "$ADDED" | grep -nEi "$PATTERN" || true)
+
+if [ -n "$HITS" ]; then
+  echo "🚫 COMMIT BỊ CHẶN — phát hiện secret trong nội dung staged:" >&2
+  echo "$HITS" | sed 's/^/    /' >&2
+  echo "" >&2
+  echo "    → Gỡ secret ra khỏi file (dùng biến môi trường / .env không commit)." >&2
+  echo "    → Nếu CHẮC CHẮN là false-positive: git commit --no-verify" >&2
+  exit 1
+fi
+
+exit 0

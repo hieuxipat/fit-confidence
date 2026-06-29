@@ -11,6 +11,13 @@ VERIFY_CMD=(echo "TODO: replace with your verification command, e.g. npm test")
 START_CMD=(echo "TODO: replace with your start command, e.g. npm run dev")
 
 echo "==> Working directory: $PWD"
+
+# Enable repo-managed git hooks (secret-scan pre-commit). Idempotent.
+if [ -d .githooks ] && git rev-parse --git-dir >/dev/null 2>&1; then
+  git config core.hooksPath .githooks
+  echo "==> git hooks: core.hooksPath -> .githooks"
+fi
+
 echo "==> Syncing dependencies"
 "${INSTALL_CMD[@]}"
 
