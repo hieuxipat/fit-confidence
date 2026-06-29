@@ -10,6 +10,7 @@
 
 ## Global Constraints
 
+- Node version pinned to **20** via `.nvmrc` (already in repo); `package.json` declares `"engines": { "node": ">=20" }` and `init.sh` warns on mismatch.
 - Units: height in **cm**, weight in **kg**.
 - All recommendation logic stays in `src/lib/sizing.ts` — pure, no DOM/network.
 - TDD: write the failing test first for every logic change.
@@ -36,6 +37,9 @@
   "name": "fit-confidence",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
@@ -48,6 +52,8 @@
   }
 }
 ```
+
+The `engines` field matches `.nvmrc` (Node 20) — keep them in sync.
 
 - [ ] **Step 2: Create `tsconfig.json`**
 
@@ -658,7 +664,22 @@ git commit -m "feat: storefront size-finder widget calling recommendSize"
 - Consumes: `npm` scripts from Task 1; existing `scripts/verify-harness.sh`.
 - Produces: `./init.sh` runs install → test → build → harness check; `feature_list.json` records the app feature with evidence.
 
-- [ ] **Step 1: Update the command block in `init.sh`**
+- [ ] **Step 1a: Add a Node version check to `init.sh`**
+
+Insert this immediately after the `cd "$ROOT_DIR"` line (before the install/verify command block):
+
+```bash
+# Pin Node version (matches .nvmrc). Warn — don't hard-fail — so the harness check still runs.
+if [ -f .nvmrc ]; then
+  want="$(cat .nvmrc)"
+  have="$(node -v 2>/dev/null | sed 's/^v//; s/\..*//')"
+  if [ -n "$have" ] && [ "$have" != "$want" ]; then
+    echo "⚠️  Node major $have != .nvmrc ($want). Run: nvm install $want && nvm use" >&2
+  fi
+fi
+```
+
+- [ ] **Step 1b: Update the command block in `init.sh`**
 
 Replace the install/verify/start command definitions with:
 
