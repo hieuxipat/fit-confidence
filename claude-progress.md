@@ -6,8 +6,8 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `init.sh` -> `cd app && npm test && shopify app build` + `scripts/verify-harness.sh`
 - Last verification result: `./init.sh` -> RESULT: PASS (2026-06-29) — npm test 11/11, shopify app build OK, harness healthy
-- Size Finder Phase 1 (storefront): DONE — `recommendSize` TDD (11 tests) + theme app block `app/extensions/size-finder/` (build passes)
-- Current highest-priority unfinished work: live preview via `shopify app dev` (operator); then Phase 2 admin (`task-app-admin`)
+- Size Finder Phase 1 (storefront): DONE + RELEASED — `recommendSize` TDD (11 tests) + theme app block (build passes), deployed as version `fit-confidence-1` (Active, Omegatheme Dev)
+- Current highest-priority unfinished work: install on dev store + add block in theme editor → capture demo video; then Phase 2 admin (`task-app-admin`)
 - Current blocker: none
 
 ## Session Log

@@ -144,8 +144,11 @@
           "dod": [
             { "criterion": "shopify app build succeeds (theme check + bundle)", "met": true, "evidence": "shopify app build -> 'fit-confidence built!'" }
           ],
-          "evidence": ["app/extensions/size-finder/blocks/size-finder.liquid + assets/size-finder.css; shopify app build OK"],
-          "notes": "UI matches docs/features/size-finder/prototype/. Live preview via shopify app dev (operator). Admin editor = Phase 2."
+          "evidence": [
+            "app/extensions/size-finder/blocks/size-finder.liquid + assets/size-finder.css; shopify app build OK",
+            "shopify app deploy -> version 'fit-confidence-1' Active on dev dashboard (Omegatheme Dev, 2026-06-29)"
+          ],
+          "notes": "UI matches docs/features/size-finder/prototype/. Released (deployed) — version fit-confidence-1 active. Live storefront preview via shopify app dev (operator). Admin editor = Phase 2."
         },
         {
           "id": "task-app-admin",

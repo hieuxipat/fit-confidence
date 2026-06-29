@@ -2,7 +2,7 @@
 
 **Deadline:** 14h Thứ Ba 30/06 (submit Form)
 **Repo:** https://github.com/hieuxipat/fit-confidence
-**Trạng thái hiện tại:** ✅ Harness + guardrails + feature map + **design brief + prototype UI** **đã làm** · ⬜ Code app MVP (recommendSize + widget) **chưa làm**.
+**Trạng thái hiện tại:** ✅ Harness + guardrails + feature map + prototype + **app MVP (recommendSize TDD + theme app block)** + **RELEASED** (version `fit-confidence-1` Active) · ⬜ Còn lại: cài lên dev store + quay demo + slide. (Phase 2 admin = stretch.)
 
 > **Tư duy của tài liệu này:** không "làm app rồi nghĩ xem áp dụng gì". Đi ngược lại — mỗi phần trình bày đã map sẵn với một việc THẬT + một mảng kiến thức khóa học. Phần lớn evidence cho phần "phương pháp/harness" **đã nằm trong git history rồi**; việc còn lại là build phần app để có evidence cho TDD + Verification + demo chạy được.
 
@@ -91,6 +91,8 @@ Flow nhỏ nhất demo được end-to-end: *"Buyer: find size"* bám các hub f
 | Tổ chức `docs/features/<feature>/{plans,specs,prototype}` | Repo là spec, có cấu trúc | **L7** |
 | Design brief (design-brainstorm) + **prototype UI** (`size-finder-widget.html`) = nguồn sự thật giao diện | "Repo là spec cho cả UI" — prototype trong harness | **L7 + L5** ⭐ |
 | Admin F011 (Phase 2): **spec + plan + prototype Polaris** (`admin-size-chart-*`) đã chuẩn bị sẵn (metafield, chưa build) | Planning trước; prototype Polaris bằng `design-prototype` | **L2 + L5 + L7** |
+| **App MVP build xong + TDD**: `recommendSize` (11 test xanh) + theme app block; `shopify app build` OK | **TDD + Verification (output thật)** | **L3** ⭐ |
+| **App RELEASED**: `shopify app deploy` → version `fit-confidence-1` Active trên dev dashboard | App Shopify thật, deploy được | **L7** |
 
 ### ⬜ Việc CÒN LẠI — bám sát plan `docs/features/size-finder/plans/size-finder.md`
 
@@ -125,7 +127,7 @@ Flow nhỏ nhất demo được end-to-end: *"Buyer: find size"* bám các hub f
 
 **3️⃣ AI hỗ trợ phần nào** — AI giúp: research, brainstorm plan, generate widget, viết test, debug; **tôi giữ vai PM + reviewer** (quyết hướng, review code, dựng guardrails để AI không phá). *Show:* 1 ReAct loop (đọc file → sửa → chạy test) + hook chặn `rm -rf` live. 🏷️ *Harness tool-use loop, đổi vai coder → PM.*
 
-**4️⃣ Kết quả đạt được** — *Show demo live/video:* 170cm/65kg → "M" + lý do. *Số liệu:* N test pass (raw output), `./init.sh` PASS, harness + guardrails hoàn chỉnh. 🏷️ *Verification (evidence = raw output), Testing.*
+**4️⃣ Kết quả đạt được** — *Show demo live/video:* 170cm/65kg → "M" + lý do (storefront dev store). *Số liệu thật:* **11/11 test xanh**, `shopify app build` OK, `./init.sh` → **RESULT: PASS**, **app RELEASED** (version `fit-confidence-1` Active — chiếu dev dashboard). 🏷️ *Verification (evidence = raw output), Testing, app Shopify thật deploy được.*
 
 **5️⃣ Khó khăn & cách xử lý** (chọn 2–3):
 - AI **bịa công thức sizing** → verify bằng size chart thật + test khóa.
