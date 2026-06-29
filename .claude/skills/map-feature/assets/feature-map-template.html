@@ -1,0 +1,1786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Feature Map — __COMPETITOR_NAME__</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #fafafa;
+    color: #1a1a1a;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  header {
+    background: #fff;
+    border-bottom: 1px solid #e5e5e5;
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  header h1 { margin: 0; font-size: 17px; font-weight: 600; }
+  header .meta { font-size: 12px; color: #666; margin-top: 4px; }
+  .view-toggle {
+    display: flex; background: #f3f4f6; border-radius: 8px; padding: 4px; gap: 4px;
+  }
+  .view-toggle button {
+    border: none; background: transparent; padding: 6px 14px; border-radius: 6px;
+    font-size: 13px; cursor: pointer; color: #4b5563; font-weight: 500;
+  }
+  .view-toggle button.active {
+    background: #fff; color: #111; box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  }
+
+  /* Complexity bar — compact single-row, wraps on narrow screens */
+  .complexity-bar {
+    background: #fff;
+    border-bottom: 1px solid #e5e5e5;
+    padding: 8px 24px;
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    align-items: center;
+    /* NO overflow-x:auto — it clips vertical content. Use flex-wrap instead. */
+  }
+  .complexity-bar .stat {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    white-space: nowrap;
+    line-height: 1.3;
+  }
+  .complexity-bar .stat .stat-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    color: #6b7280;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+  }
+  .complexity-bar .stat .stat-num {
+    font-size: 14px;
+    font-weight: 700;
+    color: #111;
+  }
+  .complexity-bar .stat .stat-sub {
+    font-size: 10px;
+    color: #9ca3af;
+  }
+  .complexity-bar .stat.rating {
+    padding: 2px 10px;
+    border-radius: 6px;
+    border: 1px solid;
+    gap: 8px;
+  }
+  .complexity-bar .stat.rating.simple   { background: #ecfdf5; border-color: #6ee7b7; color: #065f46; }
+  .complexity-bar .stat.rating.moderate { background: #fffbeb; border-color: #fcd34d; color: #92400e; }
+  .complexity-bar .stat.rating.complex  { background: #fef2f2; border-color: #fca5a5; color: #991b1b; }
+  .complexity-bar .stat.rating .stat-num,
+  .complexity-bar .stat.rating .stat-label,
+  .complexity-bar .stat.rating .stat-sub { color: inherit; }
+  .complexity-bar .stat .breakdown-bar {
+    display: inline-flex;
+    gap: 2px;
+    margin-left: 4px;
+    height: 6px;
+    width: 28px;
+    align-self: center;
+  }
+  .complexity-bar .stat .breakdown-bar > span {
+    flex: 1;
+    border-radius: 1px;
+  }
+  .complexity-bar .stat .breakdown-bar > span.tier-1 { background: #6ee7b7; }
+  .complexity-bar .stat .breakdown-bar > span.tier-2 { background: #fcd34d; }
+  .complexity-bar .stat .breakdown-bar > span.tier-3 { background: #fca5a5; }
+  .complexity-bar .stat[data-clickable] {
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 5px;
+    margin: -2px;
+    transition: background 0.15s;
+  }
+  .complexity-bar .stat[data-clickable]:hover {
+    background: #f3f4f6;
+  }
+  .complexity-bar .stat.rating[data-clickable]:hover.simple   { background: #d1fae5; }
+  .complexity-bar .stat.rating[data-clickable]:hover.moderate { background: #fef3c7; }
+  .complexity-bar .stat.rating[data-clickable]:hover.complex  { background: #fee2e2; }
+
+  /* Stats modal */
+  .cb-modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(2px);
+    z-index: 100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .cb-modal-overlay.show { display: flex; }
+  .cb-modal {
+    background: #fff;
+    border-radius: 14px;
+    max-width: 760px;
+    width: 100%;
+    max-height: 80vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.3);
+    animation: cbFadeIn 0.15s ease-out;
+  }
+  @keyframes cbFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .cb-modal-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+  .cb-modal-header h2 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #111;
+  }
+  .cb-modal-header .subtitle {
+    margin-top: 2px;
+    font-size: 12px;
+    color: #6b7280;
+  }
+  .cb-modal-close {
+    border: none;
+    background: transparent;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    color: #6b7280;
+    padding: 4px 8px;
+    border-radius: 4px;
+  }
+  .cb-modal-close:hover { background: #f3f4f6; color: #111; }
+  .cb-modal-body {
+    padding: 14px 20px;
+    overflow-y: auto;
+    flex: 1;
+    font-size: 13px;
+  }
+  .cb-modal-body table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .cb-modal-body th {
+    text-align: left;
+    padding: 6px 8px;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 10px;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    background: #fff;
+  }
+  .cb-modal-body td {
+    padding: 8px;
+    border-bottom: 1px solid #f3f4f6;
+    vertical-align: top;
+  }
+  .cb-modal-body tr.clickable td { cursor: pointer; }
+  .cb-modal-body tr.clickable:hover td { background: #f9fafb; }
+  .cb-modal-body .tag {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 600;
+    border: 1px solid;
+    margin-right: 4px;
+  }
+  .cb-modal-body .tag.independent { background: #ecfdf5; border-color: #6ee7b7; color: #065f46; }
+  .cb-modal-body .tag.dependent   { background: #fef2f2; border-color: #fca5a5; color: #991b1b; }
+  .cb-modal-body .tag.root        { background: #f0f9ff; border-color: #93c5fd; color: #1e3a8a; }
+  .cb-modal-body .tag.hub         { background: #fff7ed; border-color: #fdba74; color: #9a3412; }
+  .cb-modal-body .chain-step {
+    display: inline-flex;
+    align-items: center;
+    background: #f3f4f6;
+    border-radius: 4px;
+    padding: 4px 8px;
+    margin: 2px;
+    font-size: 11px;
+    cursor: pointer;
+    border: 1px solid transparent;
+  }
+  .cb-modal-body .chain-step:hover { border-color: #6366f1; }
+  .cb-modal-body .chain-arrow { color: #9ca3af; margin: 0 2px; }
+  .cb-modal-body .breakdown-row {
+    display: grid;
+    grid-template-columns: 110px 1fr 90px 60px;
+    gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px solid #f3f4f6;
+    align-items: center;
+  }
+  .cb-modal-body .breakdown-row:last-child { border-bottom: none; }
+  .cb-modal-body .breakdown-row .label { font-size: 12px; font-weight: 600; }
+  .cb-modal-body .breakdown-row .desc  { font-size: 11px; color: #6b7280; }
+  .cb-modal-body .breakdown-row .tier  { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; text-align: center; }
+  .cb-modal-body .breakdown-row .tier.Simple   { background: #ecfdf5; color: #065f46; }
+  .cb-modal-body .breakdown-row .tier.Moderate { background: #fffbeb; color: #92400e; }
+  .cb-modal-body .breakdown-row .tier.Complex  { background: #fef2f2; color: #991b1b; }
+  .cb-modal-body .breakdown-row .points { font-size: 11px; color: #6b7280; text-align: right; }
+  .cb-modal-body .section-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #6b7280;
+    margin: 12px 0 6px;
+    font-weight: 600;
+  }
+  .cb-modal-body .section-title:first-child { margin-top: 0; }
+  .cb-modal-body .empty-row { color: #9ca3af; font-style: italic; padding: 12px 0; text-align: center; }
+
+  .complexity-reasoning {
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e5e5;
+    padding: 6px 24px;
+    font-size: 11px;
+    color: #4b5563;
+    line-height: 1.4;
+  }
+  .complexity-reasoning strong { color: #111; }
+
+  .insights-bar {
+    background: #fffbeb; border-bottom: 1px solid #fde68a;
+    padding: 10px 24px; font-size: 12px; color: #78350f;
+  }
+  .insights-bar strong { color: #92400e; }
+  .insights-bar ul { margin: 4px 0 0; padding-left: 18px; }
+  .insights-bar li { margin-bottom: 2px; }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 220px 1fr 320px;
+    flex: 1;
+    min-height: 600px;
+    overflow: hidden;
+  }
+  aside.filters, aside.detail {
+    background: #fff;
+    padding: 14px;
+    overflow-y: auto;
+    font-size: 13px;
+  }
+  aside.filters { border-right: 1px solid #e5e5e5; }
+  aside.detail  { border-left: 1px solid #e5e5e5; }
+  aside h3 {
+    margin: 0 0 8px;
+    font-size: 11px;
+    text-transform: uppercase;
+    color: #6b7280;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+  }
+  aside section { margin-bottom: 16px; }
+  aside label {
+    display: flex; align-items: center; gap: 8px;
+    padding: 3px 0; cursor: pointer; user-select: none;
+  }
+  aside label .swatch {
+    width: 12px; height: 12px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.1);
+  }
+  aside .count { margin-left: auto; font-size: 11px; color: #9ca3af; }
+
+  main {
+    position: relative;
+    background: #fff;
+    overflow: auto;
+  }
+  #graph-host {
+    width: 100%; height: 100%;
+    overflow: auto;
+  }
+  #graph-svg {
+    display: block;
+    background: #fff;
+  }
+  #flow-view, #group-view {
+    display: none;
+    padding: 24px;
+    overflow-y: auto;
+    height: 100%;
+  }
+  #flow-view.active, #group-view.active { display: block; }
+  #graph-host.hidden { display: none; }
+
+  /* Group overview cards */
+  .group-overview-header { font-size: 15px; font-weight: 600; margin: 0 0 6px; color: #111; }
+  .group-overview-sub { font-size: 12px; color: #6b7280; margin-bottom: 18px; line-height: 1.5; }
+  .group-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .group-card {
+    background: #fff;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .group-card:hover { border-color: #6366f1; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.06); }
+  .group-card.layer-platform   { border-left: 4px solid #92400e; }
+  .group-card.layer-external   { border-left: 4px solid #3730a3; }
+  .group-card.layer-backend    { border-left: 4px solid #374151; }
+  .group-card.layer-admin      { border-left: 4px solid #1e40af; }
+  .group-card.layer-storefront { border-left: 4px solid #15803d; }
+  .group-card .gc-name { font-size: 13px; font-weight: 600; color: #111; line-height: 1.3; }
+  .group-card .gc-counts { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .group-card .gc-pill {
+    font-size: 10px; padding: 2px 7px; border-radius: 10px;
+    background: #f3f4f6; color: #4b5563; font-weight: 500;
+  }
+  .group-card .gc-pill.free { background: #ecfdf5; color: #047857; }
+  .group-card .gc-pill.pro  { background: #fef3c7; color: #92400e; }
+  .group-card .gc-deps { font-size: 10.5px; color: #6b7280; margin-top: 8px; line-height: 1.5; }
+  .group-card .gc-deps strong { color: #374151; font-weight: 600; }
+  .group-card .gc-drill { font-size: 10px; color: #6366f1; margin-top: 8px; font-weight: 600; }
+  .flow-persona { margin-bottom: 28px; }
+  .flow-persona h3 {
+    margin: 0 0 12px;
+    font-size: 13px; color: #111;
+    text-transform: none; letter-spacing: 0;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .flow-tag {
+    font-size: 10px; font-weight: 600;
+    padding: 2px 8px; border-radius: 999px;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .flow-tag.independent { background: #ecfdf5; color: #065f46; border: 1px solid #6ee7b7; }
+  .flow-tag.dependent   { background: #fef2f2; color: #991b1b; border: 1px solid #fca5a5; }
+  .flow-depends { font-size: 11px; color: #6b7280; font-weight: 400; }
+  .flow-steps { display: flex; align-items: stretch; gap: 8px; flex-wrap: wrap; }
+  .flow-step {
+    background: #fff; border: 1px solid #e5e5e5; border-radius: 8px;
+    padding: 10px 12px; font-size: 12px;
+    min-width: 140px; max-width: 200px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    cursor: pointer;
+  }
+  .flow-step:hover { border-color: #6366f1; }
+  .flow-step .id { font-size: 10px; color: #6366f1; font-weight: 600; margin-bottom: 2px; }
+  .flow-step .label { line-height: 1.4; }
+  .flow-step .meta { font-size: 9px; color: #9ca3af; margin-top: 2px; }
+  .flow-arrow { align-self: center; color: #9ca3af; font-size: 16px; }
+
+  aside.detail .empty { color: #9ca3af; font-style: italic; font-size: 12px; }
+  .node-card h2 { margin: 0 0 4px; font-size: 15px; }
+  .node-card .badge-row { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0 12px; }
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 999px;
+    font-size: 10px; font-weight: 600; border: 1px solid;
+  }
+  .node-card .field { margin: 10px 0; font-size: 12px; }
+  .node-card .field-label {
+    color: #6b7280; text-transform: uppercase;
+    font-size: 10px; letter-spacing: 0.05em; margin-bottom: 2px;
+  }
+  .node-card .field-value { color: #1a1a1a; line-height: 1.5; }
+  .node-card .relations a {
+    display: inline-block; background: #f3f4f6; color: #1f2937;
+    text-decoration: none; padding: 2px 8px; border-radius: 4px;
+    font-size: 11px; margin: 2px 4px 2px 0; cursor: pointer;
+  }
+  .node-card .relations a:hover { background: #e5e7eb; }
+
+  /* SVG node styling */
+  .node rect { cursor: pointer; transition: filter 0.15s, opacity 0.2s; }
+  .node:hover rect { filter: brightness(0.95); }
+  .node.selected rect { stroke-width: 3.5; filter: drop-shadow(0 0 4px rgba(99,102,241,0.5)); }
+  .node text { pointer-events: none; transition: opacity 0.2s; }
+  .node .id { font-size: 9px; font-weight: 700; opacity: 0.7; }
+  .node .name { font-size: 11px; font-weight: 500; }
+  .node.dimmed rect, .node.dimmed text { opacity: 0.2; }
+  .node.related rect { stroke-width: 2.5; }
+
+  .edge { fill: none; stroke-width: 1.5; opacity: 0.45; transition: opacity 0.2s, stroke-width 0.2s; }
+  .edge.dimmed { opacity: 0.05; }
+  .edge.focused { opacity: 1; stroke-width: 2.8; }
+  .edge.incoming { stroke-dasharray: none; }
+  .edge.outgoing { }
+
+  /* Edge colors by SOURCE layer */
+  .edge.from-platform   { stroke: #3b82f6; }
+  .edge.from-external   { stroke: #d946ef; }
+  .edge.from-backend    { stroke: #f59e0b; }
+  .edge.from-admin      { stroke: #a855f7; }
+  .edge.from-storefront { stroke: #10b981; }
+
+  /* Focus mode hint */
+  .focus-hint {
+    position: absolute;
+    top: 10px; right: 10px;
+    background: rgba(99,102,241,0.95);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    z-index: 16;
+    display: none;
+  }
+  .focus-hint.show { display: block; }
+  .focus-hint:hover { background: rgba(79,70,229,1); }
+
+  .swimlane-bg-platform { fill: #f0f9ff; }
+  .swimlane-bg-external { fill: #fdf4ff; }
+  .swimlane-bg-backend  { fill: #fefce8; }
+  .swimlane-bg-admin    { fill: #f5f3ff; }
+  .swimlane-bg-storefront { fill: #ecfdf5; }
+  .swimlane-divider { stroke: #e5e7eb; stroke-width: 1; stroke-dasharray: 4 4; }
+  .swimlane-label {
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    fill: #6b7280;
+  }
+  .swimlane-label-bg { fill: rgba(255,255,255,0.85); }
+
+  .legend-toggle {
+    position: absolute;
+    bottom: 10px; right: 10px;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.95);
+    border: 1px solid #e5e5e5;
+    color: #6b7280;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    z-index: 16;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .legend-toggle:hover { background: #fff; color: #1f2937; }
+  .legend-box {
+    position: absolute;
+    bottom: 48px; right: 10px;
+    background: rgba(255,255,255,0.97);
+    border: 1px solid #e5e5e5;
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 11px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    z-index: 15;
+    max-width: 280px;
+    display: none;
+  }
+  .legend-box.show { display: block; }
+  .legend-box .item { display: flex; align-items: center; gap: 6px; margin: 2px 0; }
+  .legend-box .swatch { width: 10px; height: 10px; border-radius: 2px; }
+  .legend-box .group-title {
+    font-size: 9px; text-transform: uppercase; color: #9ca3af;
+    margin-top: 6px; letter-spacing: 0.05em;
+  }
+  .legend-box .group-title:first-child { margin-top: 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1 id="competitor-name">Feature Map</h1>
+    <div class="meta" id="competitor-meta"></div>
+  </div>
+  <div class="view-toggle">
+    <button id="btn-dep" class="active">Dependency (by Layer)</button>
+    <button id="btn-groups">Groups overview</button>
+    <button id="btn-flow">User flow</button>
+  </div>
+</header>
+
+<div class="complexity-bar" id="complexity-bar"></div>
+<div class="complexity-reasoning" id="complexity-reasoning"></div>
+<div class="insights-bar" id="insights-bar"></div>
+
+<div class="layout">
+  <aside class="filters">
+    <section><h3>Layer</h3><div id="filter-layer"></div></section>
+    <section><h3>Group</h3><div id="filter-group"></div></section>
+    <section><h3>Actor</h3><div id="filter-actor"></div></section>
+    <section><h3>Type</h3><div id="filter-type"></div></section>
+    <section><h3>Sync mode</h3><div id="filter-sync"></div></section>
+    <section><h3>Data store</h3><div id="filter-store"></div></section>
+    <section><h3>Plan</h3><div id="filter-plan"></div></section>
+  </aside>
+
+  <main>
+    <div id="graph-host">
+      <svg id="graph-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+    <div id="group-view"></div>
+    <div id="flow-view"></div>
+    <button class="focus-hint" id="focus-hint">✕ Thoát focus mode</button>
+    <button class="legend-toggle" id="legend-toggle" title="Hiện chú thích">?</button>
+    <div class="legend-box" id="legend"></div>
+  </main>
+
+  <aside class="detail">
+    <div id="detail-panel">
+      <p class="empty">Click một node để xem chi tiết.</p>
+    </div>
+  </aside>
+</div>
+
+<div class="cb-modal-overlay" id="cb-modal-overlay">
+  <div class="cb-modal" id="cb-modal" role="dialog" aria-modal="true">
+    <div class="cb-modal-header">
+      <div>
+        <h2 id="cb-modal-title">Detail</h2>
+        <div class="subtitle" id="cb-modal-subtitle"></div>
+      </div>
+      <button class="cb-modal-close" id="cb-modal-close" aria-label="Close">✕</button>
+    </div>
+    <div class="cb-modal-body" id="cb-modal-body"></div>
+  </div>
+</div>
+
+<script>
+const DATA = __FEATURE_DATA__;
+
+const LAYERS = ["Shopify Platform", "External", "Backend", "Admin", "Storefront"];
+const LAYER_KEY = {
+  "Shopify Platform": "platform",
+  "External": "external",
+  "Backend": "backend",
+  "Admin": "admin",
+  "Storefront": "storefront"
+};
+const LAYER_LABEL_DISPLAY = {
+  "Shopify Platform": "SHOPIFY PLATFORM",
+  "External": "EXTERNAL (3rd-party)",
+  "Backend": "BACKEND",
+  "Admin": "ADMIN (merchant)",
+  "Storefront": "STOREFRONT (buyer)"
+};
+
+const ACTOR_COLORS = {
+  "Merchant": { bg: "#dbeafe", border: "#1e40af", text: "#1e3a8a" },
+  "Buyer":    { bg: "#bbf7d0", border: "#15803d", text: "#14532d" },
+  "System":   { bg: "#e5e7eb", border: "#374151", text: "#1f2937" }
+};
+
+// Type → rendering hint (rect roundness + dashed border)
+const TYPE_STYLE = {
+  "Entity":      { rx: 4, dashed: false },
+  "Setting":     { rx: 4, dashed: true },
+  "Action":      { rx: 18, dashed: false }, // pill shape
+  "Display":     { rx: 4, dashed: false },
+  "Integration": { rx: 0, dashed: false }
+};
+
+// Layout constants
+const NODE_W = 150;
+const NODE_H = 54;
+const NODE_H_GAP = 14;
+const NODE_V_GAP = 10;
+const SWIMLANE_PAD_TOP = 30;
+const SWIMLANE_PAD_BOTTOM = 14;
+const SVG_LEFT_PAD = 24;
+const SVG_RIGHT_PAD = 24;
+
+const activeFilters = {
+  layer: new Set(), group: new Set(), actor: new Set(), type: new Set(),
+  sync_mode: new Set(), data_store: new Set(), plan: new Set()
+};
+let selectedId = null;
+
+// ---------- Complexity computation (mirrors references/output-templates.md pseudocode) ----------
+function computeComplexity(nodes, flows) {
+  const n = nodes.length;
+  const byId = Object.fromEntries(nodes.map(x => [x.id, x]));
+
+  const independent_features = nodes.filter(x => !(x.prerequisites || []).length).length;
+  const dependent_features = n - independent_features;
+
+  // Groups
+  const explicitGroups = nodes.map(x => x.group).filter(Boolean);
+  const groupsSource = explicitGroups.length ? "explicit" : "layer_fallback";
+  const groupKeys = explicitGroups.length
+    ? explicitGroups
+    : nodes.map(x => x.layer || "Unknown");
+  const groupCounts = {};
+  groupKeys.forEach(k => groupCounts[k] = (groupCounts[k] || 0) + 1);
+  const feature_groups = Object.entries(groupCounts)
+    .map(([name, node_count]) => ({ name, node_count }))
+    .sort((a, b) => b.node_count - a.node_count);
+
+  // Edges
+  const total_edges = nodes.reduce((s, x) => s + (x.prerequisites || []).length, 0);
+  const avg_prerequisites = n ? Math.round(total_edges / n * 10) / 10 : 0;
+
+  // Longest path
+  const memo = {};
+  function depth(id, visiting) {
+    if (id in memo) return memo[id];
+    if (visiting.has(id)) return 0;
+    visiting = new Set([...visiting, id]);
+    const prereqs = (byId[id] && byId[id].prerequisites) || [];
+    const d = prereqs.length ? 1 + Math.max(...prereqs.map(p => depth(p, visiting))) : 0;
+    memo[id] = d;
+    return d;
+  }
+  const max_dependency_depth = nodes.length
+    ? Math.max(...nodes.map(x => depth(x.id, new Set())))
+    : 0;
+
+  // Hub features
+  const degree = {};
+  nodes.forEach(x => degree[x.id] = 0);
+  nodes.forEach(x => {
+    (x.prerequisites || []).forEach(p => {
+      degree[p] = (degree[p] || 0) + 1;
+      degree[x.id]++;
+    });
+  });
+  const hub_features = [...nodes]
+    .sort((a, b) => (degree[b.id] || 0) - (degree[a.id] || 0))
+    .slice(0, 3)
+    .map(x => ({ id: x.id, name: x.name, degree: degree[x.id] || 0 }));
+
+  // Flow classification (sequencing mode)
+  const PLATFORM = new Set(["Shopify Platform"]);
+  function flowIsIndependent(flow) {
+    if (!flow.steps || !flow.steps.length) return true;
+    const firstId = flow.steps[0].feature_id;
+    const node = byId[firstId];
+    if (!node) return true;
+    const prereqs = node.prerequisites || [];
+    if (!prereqs.length) return true;
+    return prereqs.every(p => byId[p] && PLATFORM.has(byId[p].layer));
+  }
+  const total_flows = (flows || []).length;
+  const independent_flows = (flows || []).filter(flowIsIndependent).length;
+  const dependent_flows = total_flows - independent_flows;
+
+  // Tier scoring
+  function tier(value, simpleMax, moderateMax) {
+    if (value <= simpleMax) return { tier: "Simple", points: 1 };
+    if (value <= moderateMax) return { tier: "Moderate", points: 2 };
+    return { tier: "Complex", points: 3 };
+  }
+  const sizeT  = tier(n, 15, 30);
+  const depthT = tier(max_dependency_depth, 3, 5);
+  const interT = tier(avg_prerequisites, 1.2, 2.0);
+  const grpT   = tier(feature_groups.length, 4, 7);
+  const score  = sizeT.points + depthT.points + interT.points + grpT.points;
+  const rating = score <= 5 ? "Simple" : score <= 9 ? "Moderate" : "Complex";
+
+  return {
+    total_features: n,
+    independent_features,
+    dependent_features,
+    feature_groups_count: feature_groups.length,
+    feature_groups_source: groupsSource,
+    feature_groups,
+    total_flows,
+    independent_flows,
+    dependent_flows,
+    flow_classification_mode: "sequencing",
+    total_edges,
+    max_dependency_depth,
+    avg_prerequisites,
+    has_cycle: false,
+    hub_features,
+    complexity_score: score,
+    complexity_rating: rating,
+    complexity_breakdown: {
+      size:            { value: n,                       tier: sizeT.tier,  points: sizeT.points  },
+      depth:           { value: max_dependency_depth,    tier: depthT.tier, points: depthT.points },
+      interconnection: { value: avg_prerequisites,       tier: interT.tier, points: interT.points },
+      group_sprawl:    { value: feature_groups.length,   tier: grpT.tier,   points: grpT.points   }
+    },
+    complexity_reasoning: "",
+    confidence: "medium"
+  };
+}
+
+// Use provided summary if present (so reasoning written by hand is preserved), else compute
+const COMPLEXITY = DATA.complexity_summary
+  ? Object.assign(computeComplexity(DATA.nodes, DATA.flows || []), DATA.complexity_summary)
+  : computeComplexity(DATA.nodes, DATA.flows || []);
+
+// ---------- Header & insights ----------
+document.getElementById("competitor-name").textContent =
+  "Feature Map — " + (DATA.competitor.name || "Unknown");
+document.getElementById("competitor-meta").textContent =
+  [DATA.competitor.category, DATA.competitor.audit_date,
+   DATA.competitor.data_quality ? "Data: " + DATA.competitor.data_quality : ""]
+    .filter(Boolean).join(" · ");
+
+// ---------- Complexity bar ----------
+function renderComplexityBar() {
+  const bar = document.getElementById("complexity-bar");
+  const c = COMPLEXITY;
+  const ratingClass = c.complexity_rating.toLowerCase();
+  const breakdownPoints = ["size", "depth", "interconnection", "group_sprawl"]
+    .map(k => c.complexity_breakdown[k].points);
+
+  const stats = [
+    {
+      key: "features",
+      label: "Total features",
+      num: c.total_features,
+      sub: `${c.independent_features} root · ${c.dependent_features} dependent`
+    },
+    {
+      key: "groups",
+      label: "Feature groups",
+      num: c.feature_groups_count,
+      sub: c.feature_groups_source === "layer_fallback"
+        ? "fallback by layer"
+        : c.feature_groups.slice(0, 2).map(g => `${g.name} (${g.node_count})`).join(" · ")
+    },
+    {
+      key: "flows",
+      label: "Total flows",
+      num: c.total_flows,
+      sub: `${c.independent_flows} independent · ${c.dependent_flows} dependent`
+    },
+    {
+      key: "depth",
+      label: "Max depth",
+      num: c.max_dependency_depth,
+      sub: `${c.total_edges} edges · avg ${c.avg_prerequisites}`
+    },
+    {
+      key: "hub",
+      label: "Top hub",
+      num: c.hub_features[0] ? c.hub_features[0].id : "—",
+      sub: c.hub_features[0]
+        ? `${c.hub_features[0].name.slice(0, 22)}${c.hub_features[0].name.length > 22 ? "…" : ""}`
+        : "no hub"
+    },
+    {
+      key: "rating",
+      label: "Complexity",
+      num: c.complexity_rating.toUpperCase(),
+      sub: `score ${c.complexity_score}/12`,
+      rating: ratingClass,
+      breakdown: breakdownPoints
+    }
+  ];
+
+  bar.innerHTML = stats.map(s => {
+    const ratingCls = s.rating ? `rating ${s.rating}` : "";
+    const breakdownHtml = s.breakdown
+      ? `<div class="breakdown-bar">${s.breakdown.map(p => `<span class="tier-${p}"></span>`).join("")}</div>`
+      : "";
+    return `<div class="stat ${ratingCls}" data-clickable data-key="${s.key}" title="Click để xem chi tiết">
+      <div class="stat-label">${s.label}</div>
+      <div class="stat-num">${s.num}</div>
+      <div class="stat-sub">${s.sub}</div>
+      ${breakdownHtml}
+    </div>`;
+  }).join("");
+
+  // Click handler — open modal with stat-specific detail
+  bar.addEventListener("click", e => {
+    const stat = e.target.closest("[data-clickable]");
+    if (!stat) return;
+    openCbModal(stat.dataset.key);
+  });
+
+  const reasoning = document.getElementById("complexity-reasoning");
+  if (c.complexity_reasoning && c.complexity_reasoning.trim()) {
+    reasoning.innerHTML = `<strong>Vì sao ${c.complexity_rating}:</strong> ${c.complexity_reasoning}`;
+  } else {
+    reasoning.style.display = "none";
+  }
+}
+renderComplexityBar();
+
+// ---------- Stat detail modal ----------
+const cbOverlay = document.getElementById("cb-modal-overlay");
+const cbTitle = document.getElementById("cb-modal-title");
+const cbSubtitle = document.getElementById("cb-modal-subtitle");
+const cbBody = document.getElementById("cb-modal-body");
+document.getElementById("cb-modal-close").addEventListener("click", closeCbModal);
+cbOverlay.addEventListener("click", e => { if (e.target === cbOverlay) closeCbModal(); });
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && cbOverlay.classList.contains("show")) closeCbModal();
+});
+
+function closeCbModal() { cbOverlay.classList.remove("show"); }
+
+function openCbModal(key) {
+  const handlers = {
+    features: renderFeaturesDetail,
+    groups: renderGroupsDetail,
+    flows: renderFlowsDetail,
+    depth: renderDepthDetail,
+    hub: renderHubDetail,
+    rating: renderRatingDetail
+  };
+  const handler = handlers[key];
+  if (!handler) return;
+  const { title, subtitle, html, autoClose } = handler();
+  if (autoClose) return; // hub: just focus the node, no modal
+  cbTitle.textContent = title;
+  cbSubtitle.textContent = subtitle || "";
+  cbBody.innerHTML = html;
+  cbOverlay.classList.add("show");
+
+  // Wire up clickable rows / chips
+  cbBody.querySelectorAll("[data-jump]").forEach(el => {
+    el.addEventListener("click", () => {
+      const id = el.dataset.jump;
+      closeCbModal();
+      btnDep.click();
+      selectedId = id;
+      renderGraph();
+      showDetail(id);
+      const g = svg.querySelector(`g.node[data-id="${id}"]`);
+      if (g && g.scrollIntoView) g.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  });
+  cbBody.querySelectorAll("[data-jump-flow]").forEach(el => {
+    el.addEventListener("click", () => {
+      closeCbModal();
+      btnFlow.click();
+      // Scroll to that persona section
+      setTimeout(() => {
+        const personaName = el.dataset.jumpFlow;
+        const headers = flowView.querySelectorAll(".flow-persona h3");
+        for (const h of headers) {
+          if (h.textContent.includes(personaName)) {
+            h.scrollIntoView({ behavior: "smooth", block: "start" });
+            break;
+          }
+        }
+      }, 50);
+    });
+  });
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+// --- Detail renderers ---
+
+function renderFeaturesDetail() {
+  const roots = DATA.nodes.filter(n => !(n.prerequisites || []).length);
+  const deps  = DATA.nodes.filter(n => (n.prerequisites || []).length);
+  const rows = (list, isRoot) => list
+    .sort((a, b) => a.id.localeCompare(b.id))
+    .map(n => `
+      <tr class="clickable" data-jump="${n.id}">
+        <td><strong>${n.id}</strong></td>
+        <td>${escapeHtml(n.name)}</td>
+        <td>${escapeHtml(n.layer || "—")}</td>
+        <td>${escapeHtml(n.group || "—")}</td>
+        <td>${isRoot ? '<span class="tag root">root</span>' : (n.prerequisites || []).length + " prereq"}</td>
+      </tr>`).join("");
+  return {
+    title: `Features (${DATA.nodes.length})`,
+    subtitle: `${roots.length} root (không prerequisite) · ${deps.length} dependent — click 1 row để focus node trên graph`,
+    html: `
+      <div class="section-title">Root features (${roots.length})</div>
+      <table>
+        <thead><tr><th>ID</th><th>Name</th><th>Layer</th><th>Group</th><th>Type</th></tr></thead>
+        <tbody>${rows(roots, true) || '<tr><td colspan="5" class="empty-row">Không có root feature</td></tr>'}</tbody>
+      </table>
+      <div class="section-title">Dependent features (${deps.length})</div>
+      <table>
+        <thead><tr><th>ID</th><th>Name</th><th>Layer</th><th>Group</th><th>Prereq</th></tr></thead>
+        <tbody>${rows(deps, false) || '<tr><td colspan="5" class="empty-row">Không có dependent feature</td></tr>'}</tbody>
+      </table>`
+  };
+}
+
+function renderGroupsDetail() {
+  const c = COMPLEXITY;
+  const usingFallback = c.feature_groups_source === "layer_fallback";
+  const groupField = usingFallback ? "layer" : "group";
+  const html = c.feature_groups.map(g => {
+    const members = DATA.nodes.filter(n => (n[groupField] || (usingFallback ? "Unknown" : null)) === g.name);
+    return `
+      <div class="section-title">${escapeHtml(g.name)} <span style="color:#9ca3af;font-weight:400;">(${g.node_count} features)</span></div>
+      <table>
+        <thead><tr><th>ID</th><th>Name</th><th>Layer</th><th>Type</th></tr></thead>
+        <tbody>${members.sort((a,b)=>a.id.localeCompare(b.id)).map(n => `
+          <tr class="clickable" data-jump="${n.id}">
+            <td><strong>${n.id}</strong></td>
+            <td>${escapeHtml(n.name)}</td>
+            <td>${escapeHtml(n.layer || "—")}</td>
+            <td>${escapeHtml(n.type || "—")}</td>
+          </tr>`).join("")}</tbody>
+      </table>`;
+  }).join("");
+  return {
+    title: `Feature groups (${c.feature_groups_count})`,
+    subtitle: usingFallback
+      ? "Inventory chưa có field `group` → fallback gom theo layer. Click 1 feature để focus."
+      : "Click 1 feature để focus trên graph.",
+    html: html || '<p class="empty-row">Không có group nào</p>'
+  };
+}
+
+function renderFlowsDetail() {
+  const c = COMPLEXITY;
+  const byId = Object.fromEntries(DATA.nodes.map(x => [x.id, x]));
+  const PLATFORM = new Set(["Shopify Platform"]);
+  function classify(f) {
+    if (f.dependency_type) return f.dependency_type;
+    if (!f.steps || !f.steps.length) return "independent";
+    const first = byId[f.steps[0].feature_id];
+    if (!first) return "independent";
+    const prereqs = first.prerequisites || [];
+    if (!prereqs.length) return "independent";
+    return prereqs.every(p => byId[p] && PLATFORM.has(byId[p].layer)) ? "independent" : "dependent";
+  }
+  const rows = (DATA.flows || []).map(f => {
+    const type = classify(f);
+    const dependsOn = (f.depends_on_flows && f.depends_on_flows.length)
+      ? `phụ thuộc: <em>${f.depends_on_flows.map(escapeHtml).join(", ")}</em>` : "";
+    const steps = (f.steps || []).map((s, i) => {
+      const node = byId[s.feature_id];
+      const arrow = i > 0 ? '<span class="chain-arrow">→</span>' : '';
+      return `${arrow}<span class="chain-step" data-jump="${s.feature_id}">${s.feature_id} ${escapeHtml((node?.name || s.label || "?").slice(0, 24))}</span>`;
+    }).join("");
+    return `
+      <tr data-jump-flow="${escapeHtml(f.persona)}" class="clickable">
+        <td><span class="tag ${type}">${type}</span></td>
+        <td>
+          <strong>${escapeHtml(f.persona)}</strong>
+          <div style="font-size:11px;color:#6b7280;margin-top:2px;">${dependsOn}</div>
+        </td>
+        <td style="font-size:11px;">${f.steps?.length || 0} step</td>
+      </tr>
+      <tr><td colspan="3" style="padding:4px 8px 12px 24px;">${steps}</td></tr>
+    `;
+  }).join("");
+  return {
+    title: `Flows (${c.total_flows})`,
+    subtitle: `${c.independent_flows} independent · ${c.dependent_flows} dependent — click 1 flow để xem trong Flow view, click 1 step để focus node`,
+    html: `<table>
+      <thead><tr><th>Type</th><th>Persona</th><th>Steps</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="3" class="empty-row">Không có flow</td></tr>'}</tbody>
+    </table>`
+  };
+}
+
+function renderDepthDetail() {
+  const c = COMPLEXITY;
+  const byId = Object.fromEntries(DATA.nodes.map(x => [x.id, x]));
+  // Find longest chain by BFS — reconstruct path
+  const memo = {};
+  const parentOf = {};
+  function depth(id, visiting) {
+    if (id in memo) return memo[id];
+    if (visiting.has(id)) return 0;
+    visiting = new Set([...visiting, id]);
+    const prereqs = (byId[id]?.prerequisites) || [];
+    if (!prereqs.length) { memo[id] = 0; parentOf[id] = null; return 0; }
+    let best = -1, bestParent = null;
+    for (const p of prereqs) {
+      const d = depth(p, visiting);
+      if (d > best) { best = d; bestParent = p; }
+    }
+    parentOf[id] = bestParent;
+    memo[id] = best + 1;
+    return memo[id];
+  }
+  DATA.nodes.forEach(n => depth(n.id, new Set()));
+  let tail = null, maxD = -1;
+  for (const n of DATA.nodes) {
+    if (memo[n.id] > maxD) { maxD = memo[n.id]; tail = n.id; }
+  }
+  // Build chain back to root
+  const chain = [];
+  let cur = tail;
+  while (cur) { chain.unshift(cur); cur = parentOf[cur]; }
+  const chainHtml = chain.map((id, i) => {
+    const n = byId[id];
+    const arrow = i > 0 ? '<span class="chain-arrow">→</span>' : '';
+    return `${arrow}<span class="chain-step" data-jump="${id}">${id} ${escapeHtml((n?.name || "?").slice(0, 22))}</span>`;
+  }).join(" ");
+  return {
+    title: `Deepest dependency chain (${c.max_dependency_depth})`,
+    subtitle: `Tổng ${c.total_edges} dependency edges · trung bình ${c.avg_prerequisites} prerequisites / feature. Click step để focus.`,
+    html: `
+      <div class="section-title">Longest path (${chain.length} steps)</div>
+      <div style="line-height:2;">${chainHtml || '<span class="empty-row">Không có chain</span>'}</div>
+      <div class="section-title">Diễn giải</div>
+      <p style="color:#4b5563;line-height:1.6;">
+        Để build được feature cuối (<strong>${escapeHtml(tail || "—")}</strong>), phải có đủ <strong>${c.max_dependency_depth} layer dependency</strong> phía trước. Đây là path dài nhất trong graph — khi clone app này, đây là chain phải plan effort dài nhất.
+      </p>`
+  };
+}
+
+function renderHubDetail() {
+  const c = COMPLEXITY;
+  if (!c.hub_features.length) return { autoClose: true };
+  const topId = c.hub_features[0].id;
+  // Focus that node + close modal
+  closeCbModal();
+  btnDep.click();
+  selectedId = topId;
+  renderGraph();
+  showDetail(topId);
+  const g = svg.querySelector(`g.node[data-id="${topId}"]`);
+  if (g && g.scrollIntoView) g.scrollIntoView({ behavior: "smooth", block: "center" });
+  return { autoClose: true };
+}
+
+function renderRatingDetail() {
+  const c = COMPLEXITY;
+  const b = c.complexity_breakdown;
+  const dimensions = [
+    { key: "size",            label: "Size",            desc: `${c.total_features} features (Simple ≤15 · Moderate ≤30 · Complex >30)` },
+    { key: "depth",           label: "Depth",           desc: `${c.max_dependency_depth} max chain (Simple ≤3 · Moderate ≤5 · Complex >5)` },
+    { key: "interconnection", label: "Interconnection", desc: `${c.avg_prerequisites} avg prereq (Simple <1.2 · Moderate ≤2.0 · Complex >2.0)` },
+    { key: "group_sprawl",    label: "Group sprawl",    desc: `${c.feature_groups_count} groups (Simple ≤4 · Moderate ≤7 · Complex >7)` }
+  ];
+  const rows = dimensions.map(d => `
+    <div class="breakdown-row">
+      <div class="label">${d.label}</div>
+      <div class="desc">${d.desc}</div>
+      <div class="tier ${b[d.key].tier}">${b[d.key].tier}</div>
+      <div class="points">${b[d.key].points}/3</div>
+    </div>`).join("");
+  return {
+    title: `Complexity: ${c.complexity_rating} (${c.complexity_score}/12)`,
+    subtitle: "Mỗi dimension chấm 1-3 điểm. Tổng ≤5 = Simple · 6-9 = Moderate · ≥10 = Complex.",
+    html: `
+      <div class="section-title">Breakdown 4 dimension</div>
+      ${rows}
+      ${c.complexity_reasoning ? `
+      <div class="section-title">Lý do</div>
+      <p style="color:#4b5563;line-height:1.6;">${escapeHtml(c.complexity_reasoning)}</p>` : ""}
+      <div class="section-title">Effort estimate</div>
+      <p style="color:#4b5563;line-height:1.6;">
+        Rating <strong>${c.complexity_rating}</strong> tương ứng với effort ước lượng:
+        ${c.complexity_rating === "Simple" ? "4-8 tuần (1-2 dev fullstack)" :
+          c.complexity_rating === "Moderate" ? "2-4 tháng (2-3 dev fullstack)" :
+          "6-12 tháng (3-5 dev fullstack, có dedicated PM/QA)"}.
+      </p>`
+  };
+}
+
+const insightsBar = document.getElementById("insights-bar");
+if (DATA.insights && DATA.insights.length) {
+  insightsBar.innerHTML = "<strong>Key insights:</strong><ul>" +
+    DATA.insights.map(i => `<li><strong>${i.title}:</strong> ${i.description}</li>`).join("") +
+    "</ul>";
+} else {
+  insightsBar.style.display = "none";
+}
+
+// ---------- Filter UI ----------
+const KEY_DEFAULT = { sync_mode: "n/a", data_store: "none", trigger: "none" };
+function buildFilterGroup(containerId, key, colorMap) {
+  const container = document.getElementById(containerId);
+  const counts = {};
+  const defaultVal = KEY_DEFAULT[key] || "Unknown";
+  DATA.nodes.forEach(n => {
+    const v = n[key] || defaultVal;
+    counts[v] = (counts[v] || 0) + 1;
+  });
+  const sortedKeys = key === "layer"
+    ? LAYERS.filter(l => l in counts).concat(Object.keys(counts).filter(k => !LAYERS.includes(k)))
+    : Object.keys(counts).sort();
+  sortedKeys.forEach(value => {
+    activeFilters[key].add(value);
+    const label = document.createElement("label");
+    const c = colorMap && colorMap[value];
+    const swatch = c
+      ? `<span class="swatch" style="background:${c.bg};border-color:${c.border}"></span>`
+      : "";
+    label.innerHTML =
+      `<input type="checkbox" checked data-key="${key}" data-value="${value}" />
+       ${swatch}<span>${value}</span><span class="count">${counts[value]}</span>`;
+    container.appendChild(label);
+  });
+  container.addEventListener("change", e => {
+    if (e.target.tagName !== "INPUT") return;
+    const { key, value } = e.target.dataset;
+    if (e.target.checked) activeFilters[key].add(value);
+    else activeFilters[key].delete(value);
+    renderGraph();
+  });
+}
+buildFilterGroup("filter-layer", "layer", null);
+buildFilterGroup("filter-group", "group", null);
+buildFilterGroup("filter-actor", "actor", ACTOR_COLORS);
+buildFilterGroup("filter-type", "type", null);
+buildFilterGroup("filter-sync", "sync_mode", null);
+buildFilterGroup("filter-store", "data_store", null);
+buildFilterGroup("filter-plan", "plan", null);
+
+// Edge color palette per source layer
+const LAYER_EDGE_CLASS = {
+  "Shopify Platform": "from-platform",
+  "External": "from-external",
+  "Backend": "from-backend",
+  "Admin": "from-admin",
+  "Storefront": "from-storefront"
+};
+const LAYER_EDGE_COLOR = {
+  "Shopify Platform": "#3b82f6",
+  "External": "#d946ef",
+  "Backend": "#f59e0b",
+  "Admin": "#a855f7",
+  "Storefront": "#10b981"
+};
+
+// ---------- Legend ----------
+document.getElementById("legend").innerHTML = `
+  <div class="group-title">Actor (fill color)</div>
+  ${Object.entries(ACTOR_COLORS).map(([a, c]) =>
+    `<div class="item"><span class="swatch" style="background:${c.bg};border:1px solid ${c.border}"></span>${a}</div>`).join("")}
+  <div class="group-title">Edge color = SOURCE layer</div>
+  ${Object.entries(LAYER_EDGE_COLOR).map(([l, color]) =>
+    `<div class="item"><span class="swatch" style="background:${color}"></span>${l}</div>`).join("")}
+  <div class="group-title">Type (shape)</div>
+  <div class="item">▭ Entity/Display · ▭ Setting (dashed) · ⬭ Action · ▢ Integration</div>
+  <div class="group-title">Sync indicator</div>
+  <div class="item">⚡ sync · ⏳ async</div>
+  <div class="group-title">Complexity tier (breakdown bar)</div>
+  <div class="item"><span class="swatch" style="background:#6ee7b7"></span>Simple</div>
+  <div class="item"><span class="swatch" style="background:#fcd34d"></span>Moderate</div>
+  <div class="item"><span class="swatch" style="background:#fca5a5"></span>Complex</div>
+  <div class="group-title" style="color:#6366f1;">💡 Click 1 node để focus</div>
+`;
+
+// ---------- Layout algorithm ----------
+function nodeVisible(n) {
+  return activeFilters.layer.has(n.layer || "Unknown")
+      && activeFilters.group.has(n.group || "Ungrouped")
+      && activeFilters.actor.has(n.actor || "Unknown")
+      && activeFilters.type.has(n.type || "Unknown")
+      && activeFilters.sync_mode.has(n.sync_mode || "n/a")
+      && activeFilters.data_store.has(n.data_store || "none")
+      && activeFilters.plan.has(n.plan || "Unknown");
+}
+
+function computeLayout(visibleNodes, hostWidth) {
+  // Group by layer
+  const byLayer = {};
+  LAYERS.forEach(l => byLayer[l] = []);
+  visibleNodes.forEach(n => {
+    const layer = LAYERS.includes(n.layer) ? n.layer : LAYERS[LAYERS.length - 1];
+    byLayer[layer].push(n);
+  });
+
+  // Determine columns per row inside each swimlane
+  const usableW = Math.max(hostWidth - SVG_LEFT_PAD - SVG_RIGHT_PAD, NODE_W + NODE_H_GAP);
+  const colsPerRow = Math.max(1, Math.floor((usableW + NODE_H_GAP) / (NODE_W + NODE_H_GAP)));
+
+  // Calculate each swimlane height based on its node count
+  const positions = {}; // id -> {x, y}
+  const swimlanes = []; // {layer, y0, y1, rows}
+  let cursorY = 0;
+
+  LAYERS.forEach(layer => {
+    const nodes = byLayer[layer];
+    // Sort nodes within layer: prerequisites first, then type, then id
+    nodes.sort((a, b) => {
+      const ap = (a.prerequisites || []).length;
+      const bp = (b.prerequisites || []).length;
+      if (ap !== bp) return ap - bp;
+      return a.id.localeCompare(b.id);
+    });
+
+    const rows = Math.max(1, Math.ceil(nodes.length / colsPerRow));
+    const swimlaneInnerH = rows * NODE_H + (rows - 1) * NODE_V_GAP;
+    const swimlaneTotalH = SWIMLANE_PAD_TOP + swimlaneInnerH + SWIMLANE_PAD_BOTTOM;
+    const minH = 90;
+    const finalH = Math.max(swimlaneTotalH, minH);
+
+    swimlanes.push({ layer, y0: cursorY, y1: cursorY + finalH, rows, nodeCount: nodes.length });
+
+    // Position each node
+    nodes.forEach((n, idx) => {
+      const row = Math.floor(idx / colsPerRow);
+      const col = idx % colsPerRow;
+      // Center the row horizontally
+      const rowNodeCount = Math.min(colsPerRow, nodes.length - row * colsPerRow);
+      const rowW = rowNodeCount * NODE_W + (rowNodeCount - 1) * NODE_H_GAP;
+      const startX = SVG_LEFT_PAD + (usableW - rowW) / 2;
+      const x = startX + col * (NODE_W + NODE_H_GAP);
+      const y = cursorY + SWIMLANE_PAD_TOP + row * (NODE_H + NODE_V_GAP);
+      positions[n.id] = { x, y };
+    });
+
+    cursorY += finalH;
+  });
+
+  return { positions, swimlanes, totalHeight: cursorY, width: hostWidth };
+}
+
+// ---------- Render graph ----------
+const svg = document.getElementById("graph-svg");
+const graphHost = document.getElementById("graph-host");
+
+function svgEl(tag, attrs = {}) {
+  const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+
+function bezierPath(x1, y1, x2, y2) {
+  // Vertical bezier — control points pull along Y axis
+  const dy = Math.abs(y2 - y1);
+  const c = Math.max(40, dy * 0.4);
+  return `M ${x1} ${y1} C ${x1} ${y1 + c}, ${x2} ${y2 - c}, ${x2} ${y2}`;
+}
+
+function getConnectedSet(nodeId) {
+  // Returns set of node IDs that are directly connected to nodeId (in or out)
+  const set = new Set([nodeId]);
+  const node = DATA.nodes.find(n => n.id === nodeId);
+  if (!node) return set;
+  (node.prerequisites || []).forEach(p => set.add(p));
+  DATA.nodes.forEach(other => {
+    if ((other.prerequisites || []).includes(nodeId)) set.add(other.id);
+  });
+  return set;
+}
+
+function renderGraph() {
+  const visibleNodes = DATA.nodes.filter(nodeVisible);
+  const visibleIds = new Set(visibleNodes.map(n => n.id));
+  const hostWidth = graphHost.clientWidth || 800;
+
+  const { positions, swimlanes, totalHeight, width } = computeLayout(visibleNodes, hostWidth);
+
+  // Connected set if a node is selected
+  const focusMode = selectedId && visibleIds.has(selectedId);
+  const connected = focusMode ? getConnectedSet(selectedId) : null;
+  document.getElementById("focus-hint").classList.toggle("show", !!focusMode);
+
+  // Reset SVG
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+  // Build per-layer arrow markers (one per source layer for color matching)
+  const defs = svgEl("defs");
+  Object.entries(LAYER_EDGE_COLOR).forEach(([layer, color]) => {
+    const key = LAYER_EDGE_CLASS[layer];
+    defs.innerHTML += `
+      <marker id="arrow-${key}" viewBox="0 0 10 10" refX="9" refY="5"
+              markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="${color}"/>
+      </marker>
+      <marker id="arrow-${key}-focused" viewBox="0 0 10 10" refX="9" refY="5"
+              markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="${color}"/>
+      </marker>`;
+  });
+  svg.appendChild(defs);
+
+  svg.setAttribute("width", width);
+  svg.setAttribute("height", totalHeight);
+  svg.setAttribute("viewBox", `0 0 ${width} ${totalHeight}`);
+
+  // Background click → deselect
+  const bgRect = svgEl("rect", {
+    x: 0, y: 0, width: width, height: totalHeight,
+    fill: "transparent", style: "cursor: default;"
+  });
+  bgRect.addEventListener("click", () => {
+    if (selectedId) {
+      selectedId = null;
+      renderGraph();
+      showDetail(null);
+    }
+  });
+  svg.appendChild(bgRect);
+
+  // Swimlane backgrounds
+  swimlanes.forEach(sl => {
+    const cls = "swimlane-bg-" + LAYER_KEY[sl.layer];
+    svg.appendChild(svgEl("rect", {
+      x: 0, y: sl.y0, width: width, height: sl.y1 - sl.y0, class: cls,
+      style: "pointer-events: none;"
+    }));
+    if (sl.y1 < totalHeight) {
+      svg.appendChild(svgEl("line", {
+        x1: 0, y1: sl.y1, x2: width, y2: sl.y1, class: "swimlane-divider",
+        style: "pointer-events: none;"
+      }));
+    }
+    const labelText = LAYER_LABEL_DISPLAY[sl.layer] + " · " + sl.nodeCount;
+    const labelW = labelText.length * 6.5 + 12;
+    svg.appendChild(svgEl("rect", {
+      x: 12, y: sl.y0 + 8, width: labelW, height: 18,
+      rx: 4, class: "swimlane-label-bg",
+      style: "pointer-events: none;"
+    }));
+    const t = svgEl("text", {
+      x: 18, y: sl.y0 + 21, class: "swimlane-label",
+      style: "pointer-events: none;"
+    });
+    t.textContent = labelText;
+    svg.appendChild(t);
+  });
+
+  // Edges
+  DATA.nodes.forEach(n => {
+    if (!visibleIds.has(n.id)) return;
+    (n.prerequisites || []).forEach(p => {
+      if (!visibleIds.has(p)) return;
+      const from = positions[p];
+      const to = positions[n.id];
+      if (!from || !to) return;
+      const x1 = from.x + NODE_W / 2;
+      const y1 = from.y + NODE_H;
+      const x2 = to.x + NODE_W / 2;
+      const y2 = to.y;
+
+      const sourceNode = DATA.nodes.find(x => x.id === p);
+      const edgeClass = LAYER_EDGE_CLASS[sourceNode?.layer] || "from-backend";
+
+      // Focus mode classification
+      let modeClass = "";
+      let markerSuffix = "";
+      if (focusMode) {
+        if (p === selectedId || n.id === selectedId) {
+          modeClass = "focused";
+          markerSuffix = "-focused";
+        } else {
+          modeClass = "dimmed";
+        }
+      }
+
+      const path = svgEl("path", {
+        d: bezierPath(x1, y1, x2, y2),
+        class: `edge ${edgeClass} ${modeClass}`.trim(),
+        "marker-end": `url(#arrow-${edgeClass}${markerSuffix})`,
+        "data-from": p,
+        "data-to": n.id
+      });
+      svg.appendChild(path);
+    });
+  });
+
+  // Nodes
+  visibleNodes.forEach(n => {
+    const pos = positions[n.id];
+    if (!pos) return;
+    const c = ACTOR_COLORS[n.actor] || ACTOR_COLORS["System"];
+    const style = TYPE_STYLE[n.type] || TYPE_STYLE["Display"];
+
+    let nodeStateClass = "";
+    if (focusMode) {
+      if (n.id === selectedId) nodeStateClass = "selected";
+      else if (connected.has(n.id)) nodeStateClass = "related";
+      else nodeStateClass = "dimmed";
+    } else if (selectedId === n.id) {
+      nodeStateClass = "selected";
+    }
+
+    const g = svgEl("g", { class: ("node " + nodeStateClass).trim(), "data-id": n.id });
+    const rect = svgEl("rect", {
+      x: pos.x, y: pos.y, width: NODE_W, height: NODE_H,
+      rx: style.rx, ry: style.rx,
+      fill: c.bg, stroke: c.border, "stroke-width": 1.5
+    });
+    if (style.dashed) rect.setAttribute("stroke-dasharray", "4 3");
+    g.appendChild(rect);
+
+    const idText = svgEl("text", {
+      x: pos.x + 8, y: pos.y + 16, class: "id", fill: c.text
+    });
+    idText.textContent = n.id;
+    g.appendChild(idText);
+
+    const nameText = svgEl("text", {
+      x: pos.x + 8, y: pos.y + 32, class: "name", fill: c.text
+    });
+    // Truncate name if too long
+    const maxChars = Math.floor((NODE_W - 16) / 6.5);
+    nameText.textContent = n.name.length > maxChars ? n.name.slice(0, maxChars - 1) + "…" : n.name;
+    g.appendChild(nameText);
+
+    // Bottom-right: type + plan + sync indicator
+    const syncIcon = n.sync_mode === "sync" ? "⚡" : n.sync_mode === "async" ? "⏳" : "";
+    const typeText = svgEl("text", {
+      x: pos.x + NODE_W - 8, y: pos.y + NODE_H - 8,
+      "text-anchor": "end", fill: c.text,
+      style: "font-size: 9px; opacity: 0.65;"
+    });
+    typeText.textContent = [
+      syncIcon,
+      n.type || "",
+      (n.plan && n.plan !== "Free" ? n.plan : "")
+    ].filter(Boolean).join(" · ");
+    g.appendChild(typeText);
+
+    g.addEventListener("click", () => {
+      selectedId = n.id;
+      renderGraph();
+      showDetail(n.id);
+    });
+    svg.appendChild(g);
+  });
+
+  if (visibleNodes.length === 0) {
+    const t = svgEl("text", {
+      x: width / 2, y: totalHeight / 2 || 100,
+      "text-anchor": "middle", fill: "#9ca3af"
+    });
+    t.textContent = "Không có node nào match filter hiện tại";
+    svg.appendChild(t);
+  }
+}
+
+// ---------- Detail panel ----------
+function showDetail(nodeId) {
+  const panel = document.getElementById("detail-panel");
+  if (!nodeId) {
+    panel.innerHTML = `<p class="empty">Click một node để xem chi tiết.</p>`;
+    return;
+  }
+  const node = DATA.nodes.find(n => n.id === nodeId);
+  if (!node) return;
+  const c = ACTOR_COLORS[node.actor] || ACTOR_COLORS["System"];
+  const neutral = { bg: "#f3f4f6", border: "#d1d5db", text: "#374151" };
+  const badge = (label, color) =>
+    `<span class="badge" style="background:${color.bg};border-color:${color.border};color:${color.text}">${label}</span>`;
+
+  const linkChip = id => {
+    const target = DATA.nodes.find(n => n.id === id);
+    return `<a data-jump="${id}">${id} — ${target ? target.name : "?"}</a>`;
+  };
+
+  const syncIcon = node.sync_mode === "sync" ? "⚡" : node.sync_mode === "async" ? "⏳" : "";
+  panel.innerHTML = `
+    <div class="node-card">
+      <h2>${node.id} · ${node.name}</h2>
+      <div class="badge-row">
+        ${node.layer ? badge(node.layer, neutral) : ""}
+        ${node.actor ? badge(node.actor, c) : ""}
+        ${node.type ? badge(node.type, neutral) : ""}
+        ${node.group ? badge(node.group, neutral) : ""}
+        ${node.plan ? badge(node.plan, neutral) : ""}
+      </div>
+      <div class="field">
+        <div class="field-label">Description</div>
+        <div class="field-value">${node.description || "—"}</div>
+      </div>
+      ${node.trigger && node.trigger !== "none" ? `
+      <div class="field">
+        <div class="field-label">Trigger</div>
+        <div class="field-value"><code style="background:#f3f4f6;padding:1px 6px;border-radius:3px;font-size:11px;">${node.trigger}</code></div>
+      </div>` : ""}
+      ${node.sync_mode && node.sync_mode !== "n/a" ? `
+      <div class="field">
+        <div class="field-label">Execution mode</div>
+        <div class="field-value">${syncIcon} ${node.sync_mode}</div>
+      </div>` : ""}
+      ${node.data_store && node.data_store !== "none" ? `
+      <div class="field">
+        <div class="field-label">Data store</div>
+        <div class="field-value"><code style="background:#f3f4f6;padding:1px 6px;border-radius:3px;font-size:11px;">${node.data_store}</code></div>
+      </div>` : ""}
+      ${node.api_scopes && node.api_scopes.length ? `
+      <div class="field">
+        <div class="field-label">Shopify scopes</div>
+        <div class="field-value">${node.api_scopes.map(s => `<code style="background:#eff6ff;color:#1e40af;padding:1px 6px;border-radius:3px;font-size:11px;margin-right:4px;">${s}</code>`).join("")}</div>
+      </div>` : ""}
+      <div class="field">
+        <div class="field-label">Prerequisites</div>
+        <div class="field-value relations">
+          ${(node.prerequisites && node.prerequisites.length)
+              ? node.prerequisites.map(linkChip).join(" ") : "None"}
+        </div>
+      </div>
+      <div class="field">
+        <div class="field-label">Enables</div>
+        <div class="field-value relations">
+          ${(node.enables && node.enables.length)
+              ? node.enables.map(linkChip).join(" ") : "None"}
+        </div>
+      </div>
+      <div class="field">
+        <div class="field-label">Evidence</div>
+        <div class="field-value">${node.evidence || "—"}</div>
+      </div>
+    </div>`;
+  panel.querySelectorAll("a[data-jump]").forEach(a => {
+    a.addEventListener("click", () => {
+      selectedId = a.dataset.jump;
+      renderGraph();
+      showDetail(selectedId);
+      // Scroll node into view
+      const g = svg.querySelector(`g.node[data-id="${selectedId}"]`);
+      if (g && g.scrollIntoView) g.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  });
+}
+
+// ---------- View toggle ----------
+const btnDep = document.getElementById("btn-dep");
+const btnFlow = document.getElementById("btn-flow");
+const flowView = document.getElementById("flow-view");
+
+const btnGroups = document.getElementById("btn-groups");
+const groupView = document.getElementById("group-view");
+
+// ---------- Group overview ----------
+function renderGroupOverview() {
+  const groupView = document.getElementById("group-view");
+  const byId = Object.fromEntries(DATA.nodes.map(x => [x.id, x]));
+
+  // Determine effective group field
+  const explicitGroups = DATA.nodes.map(x => x.group).filter(Boolean);
+  const useExplicit = explicitGroups.length > 0;
+  const groupOf = (n) => useExplicit ? (n.group || "Ungrouped") : (n.layer || "Unknown");
+
+  // Build group stats
+  const groupStats = {};
+  DATA.nodes.forEach(n => {
+    const g = groupOf(n);
+    if (!groupStats[g]) {
+      groupStats[g] = {
+        name: g, members: [], plans: {}, layers: {}, actors: {},
+        outgoing: {}, incoming: {}, intraEdges: 0
+      };
+    }
+    const s = groupStats[g];
+    s.members.push(n);
+    s.plans[n.plan || "Unknown"] = (s.plans[n.plan || "Unknown"] || 0) + 1;
+    s.layers[n.layer || "Unknown"] = (s.layers[n.layer || "Unknown"] || 0) + 1;
+    s.actors[n.actor || "Unknown"] = (s.actors[n.actor || "Unknown"] || 0) + 1;
+  });
+
+  // Compute inter-group edges
+  DATA.nodes.forEach(n => {
+    const srcG = groupOf(n);
+    (n.prerequisites || []).forEach(pid => {
+      const pNode = byId[pid];
+      if (!pNode) return;
+      const prereqG = groupOf(pNode);
+      if (prereqG === srcG) {
+        groupStats[srcG].intraEdges++;
+      } else {
+        groupStats[srcG].incoming[prereqG] = (groupStats[srcG].incoming[prereqG] || 0) + 1;
+        groupStats[prereqG].outgoing[srcG] = (groupStats[prereqG].outgoing[srcG] || 0) + 1;
+      }
+    });
+  });
+
+  // Determine primary layer per group (for color)
+  const layerToClass = {
+    "Shopify Platform": "layer-platform",
+    "External": "layer-external",
+    "Backend": "layer-backend",
+    "Admin": "layer-admin",
+    "Storefront": "layer-storefront"
+  };
+
+  // Sort groups: foundation (most outgoing) first
+  const sortedGroups = Object.values(groupStats).sort((a, b) => {
+    const outA = Object.values(a.outgoing).reduce((s, v) => s + v, 0);
+    const outB = Object.values(b.outgoing).reduce((s, v) => s + v, 0);
+    if (outA !== outB) return outB - outA;
+    return b.members.length - a.members.length;
+  });
+
+  // Render
+  const cardsHtml = sortedGroups.map(s => {
+    const primaryLayer = Object.entries(s.layers).sort((a, b) => b[1] - a[1])[0][0];
+    const layerCls = layerToClass[primaryLayer] || "layer-admin";
+    const planPills = Object.entries(s.plans)
+      .sort((a, b) => b[1] - a[1])
+      .map(([p, c]) => `<span class="gc-pill ${p.toLowerCase()}">${escapeHtml(p)} ${c}</span>`)
+      .join("");
+    const outDeps = Object.entries(s.outgoing)
+      .sort((a, b) => b[1] - a[1]).slice(0, 3)
+      .map(([g, c]) => `<strong>${escapeHtml(g.length > 28 ? g.slice(0, 26) + "…" : g)}</strong> (${c})`)
+      .join(", ");
+    const inDeps = Object.entries(s.incoming)
+      .sort((a, b) => b[1] - a[1]).slice(0, 3)
+      .map(([g, c]) => `<strong>${escapeHtml(g.length > 28 ? g.slice(0, 26) + "…" : g)}</strong> (${c})`)
+      .join(", ");
+    return `<div class="group-card ${layerCls}" data-group="${escapeHtml(s.name)}">
+      <div class="gc-name">${escapeHtml(s.name)}</div>
+      <div class="gc-counts">
+        <span class="gc-pill">${s.members.length} nodes</span>
+        <span class="gc-pill">${s.intraEdges} intra-edges</span>
+        ${planPills}
+      </div>
+      ${outDeps ? `<div class="gc-deps">→ <em>enables</em>: ${outDeps}</div>` : ""}
+      ${inDeps ? `<div class="gc-deps">← <em>depends on</em>: ${inDeps}</div>` : ""}
+      <div class="gc-drill">Click để drill-down sub-map →</div>
+    </div>`;
+  }).join("");
+
+  const totalGroups = sortedGroups.length;
+  const totalNodes = DATA.nodes.length;
+  const totalInter = sortedGroups.reduce((s, g) => s + Object.values(g.outgoing).reduce((x, v) => x + v, 0), 0);
+
+  groupView.innerHTML = `
+    <div class="group-overview-header">System overview · ${totalGroups} groups · ${totalNodes} features · ${totalInter} inter-group edges</div>
+    <div class="group-overview-sub">
+      Mỗi card = 1 functional group. Click một group để drill-down: graph chính sẽ filter chỉ hiển thị nodes trong group đó + prerequisites trực tiếp.
+      Card được sort theo số <em>downstream dependency</em> (group nào "enables" nhiều thứ nhất ở trên cùng = foundation).
+    </div>
+    <div class="group-grid">${cardsHtml}</div>`;
+
+  // Click handler — drill down to selected group via filter
+  groupView.querySelectorAll(".group-card").forEach(card => {
+    card.addEventListener("click", () => {
+      const targetGroup = card.dataset.group;
+      // Clear group filter + add only this group
+      activeFilters.group.clear();
+      activeFilters.group.add(targetGroup);
+      // Sync the UI checkboxes for group filter
+      const groupFilterDiv = document.getElementById("filter-group");
+      groupFilterDiv.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        cb.checked = cb.value === targetGroup;
+      });
+      // Switch back to Dependency view
+      btnDep.click();
+    });
+  });
+}
+
+
+
+btnGroups.addEventListener("click", () => {
+  btnGroups.classList.add("active");
+  btnDep.classList.remove("active");
+  btnFlow.classList.remove("active");
+  graphHost.classList.add("hidden");
+  flowView.classList.remove("active");
+  groupView.classList.add("active");
+  document.getElementById("focus-hint").classList.remove("show");
+  renderGroupOverview();
+});
+
+btnDep.addEventListener("click", () => {
+  btnDep.classList.add("active");
+  btnFlow.classList.remove("active");
+  if (typeof btnGroups !== "undefined") btnGroups.classList.remove("active");
+  if (typeof groupView !== "undefined") groupView.classList.remove("active");
+  graphHost.classList.remove("hidden");
+  flowView.classList.remove("active");
+  document.getElementById("legend-toggle").style.display = "flex";
+});
+btnFlow.addEventListener("click", () => {
+  btnFlow.classList.add("active");
+  btnDep.classList.remove("active");
+  if (typeof btnGroups !== "undefined") btnGroups.classList.remove("active");
+  if (typeof groupView !== "undefined") groupView.classList.remove("active");
+  graphHost.classList.add("hidden");
+  flowView.classList.add("active");
+  document.getElementById("legend-toggle").style.display = "none";
+  document.getElementById("legend").classList.remove("show");
+  renderFlows();
+});
+
+// Legend toggle button
+document.getElementById("legend-toggle").addEventListener("click", () => {
+  document.getElementById("legend").classList.toggle("show");
+});
+
+function renderFlows() {
+  // Build a quick map: flow persona → dependency_type (use COMPLEXITY pseudocode rule
+  // if flow doesn't carry dependency_type itself)
+  const byId = Object.fromEntries(DATA.nodes.map(x => [x.id, x]));
+  const PLATFORM = new Set(["Shopify Platform"]);
+  function classifyFlow(flow) {
+    if (flow.dependency_type) return flow.dependency_type;
+    if (!flow.steps || !flow.steps.length) return "independent";
+    const firstId = flow.steps[0].feature_id;
+    const node = byId[firstId];
+    if (!node) return "independent";
+    const prereqs = node.prerequisites || [];
+    if (!prereqs.length) return "independent";
+    return prereqs.every(p => byId[p] && PLATFORM.has(byId[p].layer))
+      ? "independent" : "dependent";
+  }
+
+  flowView.innerHTML = (DATA.flows || []).map(flow => {
+    const depType = classifyFlow(flow);
+    const dependsOn = (flow.depends_on_flows && flow.depends_on_flows.length)
+      ? `<span class="flow-depends">phụ thuộc: ${flow.depends_on_flows.join(", ")}</span>` : "";
+    return `
+    <div class="flow-persona">
+      <h3>
+        ${flow.persona}
+        <span class="flow-tag ${depType}">${depType}</span>
+        ${dependsOn}
+      </h3>
+      <div class="flow-steps">
+        ${flow.steps.map((s, i) => {
+          const node = DATA.nodes.find(n => n.id === s.feature_id);
+          const c = node ? (ACTOR_COLORS[node.actor] || ACTOR_COLORS["System"]) : ACTOR_COLORS["System"];
+          return `
+            ${i > 0 ? '<span class="flow-arrow">→</span>' : ''}
+            <div class="flow-step" data-id="${s.feature_id}" style="border-left:3px solid ${c.border}">
+              <div class="id">${s.feature_id}</div>
+              <div class="label">${s.label}</div>
+              <div class="meta">${node ? (node.layer || "") : ""}</div>
+            </div>`;
+        }).join("")}
+      </div>
+    </div>`;
+  }).join("") || `<p class="empty">Chưa có flow nào được map.</p>`;
+  flowView.querySelectorAll(".flow-step").forEach(el => {
+    el.addEventListener("click", () => {
+      btnDep.click();
+      selectedId = el.dataset.id;
+      renderGraph();
+      showDetail(selectedId);
+    });
+  });
+}
+
+// Focus hint button
+document.getElementById("focus-hint").addEventListener("click", () => {
+  selectedId = null;
+  renderGraph();
+  showDetail(null);
+});
+
+// Escape key exits focus
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && selectedId) {
+    selectedId = null;
+    renderGraph();
+    showDetail(null);
+  }
+});
+
+// ---------- Init ----------
+renderGraph();
+window.addEventListener("resize", () => {
+  clearTimeout(window.__rerender);
+  window.__rerender = setTimeout(renderGraph, 150);
+});
+</script>
+</body>
+</html>
