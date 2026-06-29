@@ -34,8 +34,8 @@
 <script type="module">
   import { recommendSize, TSHIRT_CHART } from "{{ 'sizing.js' | asset_url }}";
 
-  // NOTE: in <script type="module"> document.currentScript is null, so scope by
-  // the block's unique wrapper id instead (also supports multiple blocks).
+  // NOTE: document.currentScript is null inside module scripts, so scope by the
+  // block's unique wrapper id instead (also supports multiple blocks per page).
   const root = document.getElementById("sf-wrap-{{ block.id }}") || document;
   const q = (sel) => root.querySelector(sel);
 
