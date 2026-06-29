@@ -2,7 +2,7 @@
 
 **Deadline:** 14h Thứ Ba 30/06 (submit Form)
 **Repo:** https://github.com/hieuxipat/fit-confidence
-**Trạng thái hiện tại:** ✅ Harness + guardrails + feature map **đã build & commit thật** · ⬜ Code app MVP (recommendSize + widget) **chưa làm**.
+**Trạng thái hiện tại:** ✅ Harness + guardrails + feature map + **design brief + prototype UI** **đã làm** · ⬜ Code app MVP (recommendSize + widget) **chưa làm**.
 
 > **Tư duy của tài liệu này:** không "làm app rồi nghĩ xem áp dụng gì". Đi ngược lại — mỗi phần trình bày đã map sẵn với một việc THẬT + một mảng kiến thức khóa học. Phần lớn evidence cho phần "phương pháp/harness" **đã nằm trong git history rồi**; việc còn lại là build phần app để có evidence cho TDD + Verification + demo chạy được.
 
@@ -83,23 +83,26 @@ Flow nhỏ nhất demo được end-to-end: *"Buyer: find size"* bám 4 hub feat
 | Harness files (AGENTS/CLAUDE/feature_list/init.sh) | Tư duy harness, context cho agent | **L7 + L1** |
 | Guardrails: hook chặn lệnh + permissions + pre-commit secret + chống injection | Security & Hooks | **L4** ⭐ |
 | Cài Skills + chạy `/map-feature` ra feature map đối thủ | Skills + Delegation | **L5 + L2** |
-| Brainstorm → **spec** → **plan** (trong `docs/superpowers/`) | Planning có artifact thật | **L2** |
+| Brainstorm → **spec** → **plan** (trong `docs/features/size-finder/`) | Planning có artifact thật | **L2** |
 | `init.sh` verify thật (harness integrity check) | Verification + harness | **L3 + L7** |
+| Pin Node 20 (`.nvmrc` + engines + check trong init.sh) | Môi trường tái lập được | **L7** |
+| Tổ chức `docs/features/<feature>/{plans,specs,prototype}` | Repo là spec, có cấu trúc | **L7** |
+| Design brief (design-brainstorm) + **prototype UI** (`size-finder-widget.html`) = nguồn sự thật giao diện | "Repo là spec cho cả UI" — prototype trong harness | **L7 + L5** ⭐ |
 
-### ⬜ Việc CÒN LẠI — bám sát plan `docs/superpowers/plans/2026-06-29-size-finder.md`
+### ⬜ Việc CÒN LẠI — bám sát plan `docs/features/size-finder/plans/size-finder.md`
 
 > Mỗi bước = 1 task trong plan (đã viết sẵn code từng step). Cột **Lession** là cái để chỉ vào khi trình bày.
 
 | Bước (plan task) | Làm gì | Kiến thức áp dụng | Lession |
 |---|---|---|---|
-| **0. Commit tài liệu** | Commit Phase 0 + spec + plan → push | Harness = system-of-record; planning = artifact | L7, L2 |
+| **0. Commit tài liệu** | Commit restructure `docs/features/` + prototype + bản demo doc → push | Harness = system-of-record; planning = artifact | L7, L2 |
 | **1. Scaffold** (Task 1) | TS + Vite + Vitest + smoke test | Setup verify; AI generate scaffold (tool-use loop) | L7, L1 |
 | **2. Types + chart** (Task 2) | `types.ts` + seed `tshirt-chart.ts` | Domain modeling — đóng gói tri thức cho agent | L1 |
 | **3. recommendSize exact** (Task 3) ⭐ | RED→GREEN: 170/65→M, 185/90→XL | **TDD** vòng đỏ–xanh | **L3** |
 | **4. Validation** (Task 4) | Input xấu → throw (test trước) | TDD + nghĩ như guardrail cho dữ liệu | L3 (+L4) |
 | **5. Out-of-range** (Task 5) | Ngoài bảng → nearest estimate | TDD edge case — "AI hay quên biên" | **L3** |
 | **6. Fit adjustment** (Task 6) | slim/relaxed nudges size | TDD + REFACTOR giữ behavior | **L3** |
-| **7. Widget** (Task 7) | button→modal→form→kết quả | AI hỗ trợ build UI; skill `design-prototype`; ReAct loop | L5, L1 |
+| **7. Widget** (Task 7) | **hiện thực hóa prototype** đã có (`prototype/size-finder-widget.html`) → button→modal→form→kết quả | Realize prototype (nguồn sự thật UI); ReAct loop | L7, L1 |
 | **8. Wire init.sh + state** (Task 8) | init.sh chạy test+build+harness; update `feature_list.json` | **Verification = raw output**; DoD; harness | L3, L7 |
 | **9. Thực thi plan** | Chạy plan qua subagent-driven / inline | **Delegation** + **Subagent architecture** | L2, L5 |
 | **10. Debug khi kẹt** | reproduce → ≥3 hypothesis → root cause → regression test | **Systematic Debugging** 6 bước | **L3** |
@@ -124,7 +127,8 @@ Flow nhỏ nhất demo được end-to-end: *"Buyer: find size"* bám 4 hub feat
 **5️⃣ Khó khăn & cách xử lý** (chọn 2–3):
 - AI **bịa công thức sizing** → verify bằng size chart thật + test khóa.
 - Feature map 31 feature rating "Complex" → **cắt scope** về 4 hub.
-- Lo agent chạy lệnh nguy hiểm / lộ secret → **dựng hooks + pre-commit guard** (chặn `rm -rf`, secret). 🏷️ *Guardrails, Debugging, Planning (cắt scope).*
+- Lo agent chạy lệnh nguy hiểm / lộ secret → **dựng hooks + pre-commit guard** (chặn `rm -rf`, secret).
+- Skill `design-prototype` khóa vào **Polaris/Admin** → KHÔNG hợp **storefront widget** → nhận ra & **tự author prototype storefront** thay vì ép sai tool. 🏷️ *Guardrails, Debugging, Planning (cắt scope), chọn đúng tool.*
 
 **6️⃣ Bài học rút ra** — (1) Áp dụng kiến thức TỪ khâu chọn đề tài. (2) Plan kỹ + có test → AI nhanh & đáng tin hơn. (3) Harness + guardrails giữ AI không đi lạc/không phá. (4) Done = có evidence (commit + raw output), không phải AI nói xong. 🏷️ *Tổng kết: tư duy Harness Engineer.*
 

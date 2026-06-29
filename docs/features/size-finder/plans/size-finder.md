@@ -705,7 +705,7 @@ Add this object to the `features` array (after `feat-flow`):
 {
   "id": "feat-app",
   "title": "Size Finder MVP (recommendSize + storefront widget)",
-  "source_idea": "docs/superpowers/specs/2026-06-29-size-finder-design.md",
+  "source_idea": "docs/features/size-finder/specs/size-finder-design.md",
   "tasks": [
     {
       "id": "task-app-recommender",
@@ -714,8 +714,8 @@ Add this object to the `features` array (after `feat-flow`):
         "Exact match by height+weight, fit adjustment, out-of-range estimate, input validation."
       ],
       "status": "passing",
-      "spec_ids": ["2026-06-29-size-finder-design"],
-      "plan_ref": "docs/superpowers/plans/2026-06-29-size-finder.md",
+      "spec_ids": ["size-finder-design"],
+      "plan_ref": "docs/features/size-finder/plans/size-finder.md",
       "review": { "rounds": 0, "max_rounds": 3, "last_result": "n/a" },
       "release": { "rounds": 0, "max_rounds": 3, "last_result": "n/a" },
       "dod": [
@@ -729,8 +729,8 @@ Add this object to the `features` array (after `feat-flow`):
       "title": "Storefront Size Finder widget",
       "requirements": ["Button -> modal -> form -> calls recommendSize -> shows size + reason."],
       "status": "passing",
-      "spec_ids": ["2026-06-29-size-finder-design"],
-      "plan_ref": "docs/superpowers/plans/2026-06-29-size-finder.md",
+      "spec_ids": ["size-finder-design"],
+      "plan_ref": "docs/features/size-finder/plans/size-finder.md",
       "review": { "rounds": 0, "max_rounds": 3, "last_result": "n/a" },
       "release": { "rounds": 0, "max_rounds": 3, "last_result": "n/a" },
       "dod": [

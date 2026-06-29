@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>fit-confidence — Size Finder (prototype)</title>
+<!--
+  UI SOURCE OF TRUTH for the Size Finder storefront widget.
+  Hand-authored from ../specs/size-finder-design.md (storefront, not Polaris admin).
+  The real app (plan Task 7) must look visually equivalent to this.
+  This file is a self-contained mock: the recommendSize logic here is a SIMPLIFIED
+  stand-in just so the prototype is interactive — the real logic lives in src/lib/sizing.ts.
+-->
+<style>
+  * { box-sizing: border-box; font-family: -apple-system, system-ui, "Segoe UI", sans-serif; }
+  body { margin: 0; background: #f6f6f7; color: #1a1a1a; }
+
+  /* --- Product page (PDP) mock --- */
+  .pdp { max-width: 880px; margin: 40px auto; padding: 0 16px; }
+  .product { display: flex; gap: 32px; background: #fff; padding: 32px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  .product__image { width: 280px; height: 340px; flex: none; border-radius: 8px;
+    background: linear-gradient(135deg,#dfe6f0,#c3d0e0); }
+  .product__info h1 { margin: 0 0 8px; font-size: 26px; }
+  .price { font-size: 20px; color: #444; margin: 0 0 20px; }
+  .sizes { display: flex; gap: 8px; margin: 0 0 20px; }
+  .sizes button { width: 44px; height: 44px; border: 1px solid #ccc; background: #fff; border-radius: 8px; cursor: pointer; }
+  .findlink { display: inline-block; margin-left: 4px; font-size: 13px; color: #2b6cb0;
+    background: none; border: 0; cursor: pointer; text-decoration: underline; padding: 0; }
+
+  .btn { background: #1a1a1a; color: #fff; border: 0; padding: 12px 20px; border-radius: 8px;
+    cursor: pointer; font-size: 15px; }
+  .btn:hover { background: #333; }
+  .btn--block { width: 100%; }
+  .btn--ghost { background: transparent; color: #555; }
+  .btn--ghost:hover { background: #eee; }
+
+  /* --- Modal --- */
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,.45);
+    display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .modal[hidden] { display: none; }
+  .modal__card { background: #fff; padding: 28px; border-radius: 12px; width: 340px;
+    display: flex; flex-direction: column; gap: 14px; max-height: 90vh; overflow: auto; }
+  .modal__card h2 { margin: 0; font-size: 20px; }
+  .field { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .field label { font-size: 14px; }
+  .field input, .field select { width: 140px; padding: 7px 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
+
+  .error { color: #b42318; background: #fef3f2; border: 1px solid #fda29b; border-radius: 6px;
+    padding: 8px 10px; margin: 0; font-size: 14px; }
+  .error[hidden] { display: none; }
+
+  .result { text-align: center; border-top: 1px solid #eee; padding-top: 14px; }
+  .result[hidden] { display: none; }
+  .badge { font-size: 52px; font-weight: 700; line-height: 1; }
+  .reason { color: #555; font-size: 14px; margin: 8px 0 0; }
+  .estimate-tag { display: inline-block; margin-top: 8px; font-size: 12px; font-weight: 600;
+    color: #8a5a00; background: #fff4e0; border: 1px solid #f0c980; border-radius: 999px; padding: 2px 10px; }
+  .estimate-tag[hidden] { display: none; }
+</style>
+</head>
+<body>
+  <main class="pdp">
+    <section class="product">
+      <div class="product__image" aria-hidden="true"></div>
+      <div class="product__info">
+        <h1>Classic Cotton T-Shirt</h1>
+        <p class="price">$24.00</p>
+        <div class="sizes" aria-label="Available sizes">
+          <button type="button">S</button>
+          <button type="button">M</button>
+          <button type="button">L</button>
+          <button type="button">XL</button>
+        </div>
+        <button type="button" id="find-size" class="findlink">📏 Find my size</button>
+        <div style="margin-top:20px;"><button type="button" class="btn">Add to cart</button></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal -->
+  <div id="modal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal__card">
+      <h2 id="modal-title">Find my size</h2>
+
+      <div class="field">
+        <label for="height">Height (cm)</label>
+        <input id="height" type="number" inputmode="numeric" value="170" aria-describedby="form-error" />
+      </div>
+      <div class="field">
+        <label for="weight">Weight (kg)</label>
+        <input id="weight" type="number" inputmode="numeric" value="65" aria-describedby="form-error" />
+      </div>
+      <div class="field">
+        <label for="fit">Fit</label>
+        <select id="fit">
+          <option value="slim">Slim</option>
+          <option value="regular" selected>Regular</option>
+          <option value="relaxed">Relaxed</option>
+        </select>
+      </div>
+
+      <button type="button" id="recommend" class="btn btn--block">Recommend</button>
+
+      <p id="form-error" class="error" role="alert" hidden></p>
+
+      <div id="result" class="result" hidden>
+        <div id="size-badge" class="badge"></div>
+        <p id="reason" class="reason"></p>
+        <span id="estimate-tag" class="estimate-tag" hidden>estimate</span>
+      </div>
+
+      <button type="button" id="close" class="btn btn--ghost">Close</button>
+    </div>
+  </div>
+
+<script>
+/* --- SIMPLIFIED stand-in of recommendSize (prototype only) ---
+   Mirrors the contract in ../specs/size-finder-design.md so the mock is interactive.
+   Real implementation: src/lib/sizing.ts (TDD). */
+const CHART = [
+  { size: 'S',  h:[158,167], w:[50,60] },
+  { size: 'M',  h:[167,176], w:[60,72] },
+  { size: 'L',  h:[176,184], w:[72,84] },
+  { size: 'XL', h:[184,193], w:[80,96] },
+];
+const ORDER = ['S','M','L','XL'];
+
+function recommendSize({ height_cm, weight_kg, fit }) {
+  if (!Number.isFinite(height_cm) || height_cm <= 0 || height_cm > 260) throw new Error('Please enter a valid height (cm).');
+  if (!Number.isFinite(weight_kg) || weight_kg <= 0 || weight_kg > 400) throw new Error('Please enter a valid weight (kg).');
+  if (!['slim','regular','relaxed'].includes(fit)) throw new Error('Please choose a fit.');
+
+  const row = CHART.find(r => height_cm >= r.h[0] && height_cm <= r.h[1] && weight_kg >= r.w[0] && weight_kg <= r.w[1]);
+  if (row) {
+    let size = row.size;
+    const span = row.h[1] - row.h[0];
+    const pos = span > 0 ? (height_cm - row.h[0]) / span : 0.5;
+    const i = ORDER.indexOf(size);
+    if (fit === 'slim' && pos <= 0.34 && i > 0) size = ORDER[i-1];
+    if (fit === 'relaxed' && pos >= 0.66 && i < ORDER.length-1) size = ORDER[i+1];
+    const reason = size !== row.size
+      ? `${height_cm}cm & ${weight_kg}kg fit ${row.size}; ${fit} fit adjusts to ${size}.`
+      : `${height_cm}cm & ${weight_kg}kg fall in ${row.size} (${row.h[0]}–${row.h[1]}cm, ${row.w[0]}–${row.w[1]}kg); ${fit} fit kept.`;
+    return { size, reason, exact: true };
+  }
+  // nearest
+  let best = CHART[0], bestD = Infinity;
+  for (const r of CHART) {
+    const ch = (r.h[0]+r.h[1])/2, cw = (r.w[0]+r.w[1])/2;
+    const d = ((height_cm-ch)/10)**2 + ((weight_kg-cw)/8)**2;
+    if (d < bestD) { bestD = d; best = r; }
+  }
+  return { size: best.size, reason: `${height_cm}cm & ${weight_kg}kg are outside the chart; closest size is ${best.size}.`, exact: false };
+}
+
+/* --- Wiring --- */
+const $ = (id) => document.getElementById(id);
+const modal = $('modal');
+let lastFocused = null;
+
+function openModal() {
+  lastFocused = document.activeElement;
+  modal.hidden = false;
+  $('height').focus();
+}
+function closeModal() {
+  modal.hidden = true;
+  if (lastFocused) lastFocused.focus();
+}
+
+$('find-size').addEventListener('click', openModal);
+$('close').addEventListener('click', closeModal);
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !modal.hidden) closeModal(); });
+
+$('recommend').addEventListener('click', () => {
+  const err = $('form-error'), res = $('result'), tag = $('estimate-tag');
+  err.hidden = true; res.hidden = true; tag.hidden = true;
+  try {
+    const rec = recommendSize({
+      height_cm: Number($('height').value),
+      weight_kg: Number($('weight').value),
+      fit: $('fit').value,
+    });
+    $('size-badge').textContent = rec.size;
+    $('reason').textContent = rec.reason;
+    tag.hidden = rec.exact;        // show "estimate" tag only when not exact
+    res.hidden = false;
+  } catch (e) {
+    err.textContent = e.message;
+    err.hidden = false;
+  }
+});
+</script>
+</body>
+</html>
