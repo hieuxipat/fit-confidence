@@ -111,6 +111,56 @@
           "notes": ""
         }
       ]
+    },
+    {
+      "id": "feat-app",
+      "title": "Size Finder Shopify app (theme app extension)",
+      "source_idea": "docs/features/size-finder/specs/size-finder-design.md",
+      "tasks": [
+        {
+          "id": "task-app-recommender",
+          "title": "recommendSize() core logic, fully TDD",
+          "requirements": ["Exact match, fit adjustment, out-of-range estimate, input validation."],
+          "status": "passing",
+          "spec_ids": ["size-finder-design"],
+          "plan_ref": "docs/features/size-finder/plans/size-finder.md",
+          "review": { "rounds": 0, "max_rounds": 3, "last_result": "n/a" },
+          "release": { "rounds": 0, "max_rounds": 3, "last_result": "n/a" },
+          "dod": [
+            { "criterion": "Vitest suite passes (exact, validation, out-of-range, fit, custom-chart)", "met": true, "evidence": "npm test: 11 passed" }
+          ],
+          "evidence": ["app/extensions/size-finder/assets/sizing.{js,test.js}; npm test -> 11/11 green"],
+          "notes": "TDD RED->GREEN in commit history."
+        },
+        {
+          "id": "task-app-block",
+          "title": "Theme app block + widget UI",
+          "requirements": ["App block renders button + modal; calls recommendSize; reads merchant chart (metafield) with fallback; matches prototype."],
+          "status": "passing",
+          "spec_ids": ["size-finder-design"],
+          "plan_ref": "docs/features/size-finder/plans/size-finder.md",
+          "review": { "rounds": 0, "max_rounds": 3, "last_result": "n/a" },
+          "release": { "rounds": 0, "max_rounds": 3, "last_result": "n/a" },
+          "dod": [
+            { "criterion": "shopify app build succeeds (theme check + bundle)", "met": true, "evidence": "shopify app build -> 'fit-confidence built!'" }
+          ],
+          "evidence": ["app/extensions/size-finder/blocks/size-finder.liquid + assets/size-finder.css; shopify app build OK"],
+          "notes": "UI matches docs/features/size-finder/prototype/. Live preview via shopify app dev (operator). Admin editor = Phase 2."
+        },
+        {
+          "id": "task-app-admin",
+          "title": "Admin Polaris size-chart editor (metafield)",
+          "requirements": ["Merchant edits chart in admin; stored in shop metafield; storefront widget uses it."],
+          "status": "not_started",
+          "spec_ids": ["admin-size-chart-design"],
+          "plan_ref": "docs/features/size-finder/plans/admin-size-chart.md",
+          "review": { "rounds": 0, "max_rounds": 3, "last_result": null },
+          "release": { "rounds": 0, "max_rounds": 3, "last_result": null },
+          "dod": [],
+          "evidence": [],
+          "notes": "Phase 2 / stretch — spec + plan + prototype ready; needs embedded Remix template."
+        }
+      ]
     }
   ]
 }

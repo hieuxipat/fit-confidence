@@ -4,9 +4,10 @@
 
 - Repository root: harness-agent (remote: fit-confidence)
 - Standard startup path: `./init.sh`
-- Standard verification path: `scripts/verify-harness.sh` (harness integrity check, 18 checks) — wired into `init.sh`
-- Last verification result: `./init.sh` -> RESULT: PASS (2026-06-29)
-- Current highest-priority unfinished feature: feat-flow / task-flow-idea (`/idea` command) — not started
+- Standard verification path: `init.sh` -> `cd app && npm test && shopify app build` + `scripts/verify-harness.sh`
+- Last verification result: `./init.sh` -> RESULT: PASS (2026-06-29) — npm test 11/11, shopify app build OK, harness healthy
+- Size Finder Phase 1 (storefront): DONE — `recommendSize` TDD (11 tests) + theme app block `app/extensions/size-finder/` (build passes)
+- Current highest-priority unfinished work: live preview via `shopify app dev` (operator); then Phase 2 admin (`task-app-admin`)
 - Current blocker: none
 
 ## Session Log

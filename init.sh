@@ -5,14 +5,23 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT_DIR"
 
-# Install: nothing to fetch yet for the harness itself (no app dependencies).
-INSTALL_CMD=(echo "No external dependencies to install for the harness.")
-# Verify: run the real harness integrity check (artifacts, JSON schema, hook self-tests).
-VERIFY_CMD=(bash "$ROOT_DIR/scripts/verify-harness.sh")
-# Start: the harness has no long-running app; this is the entrypoint reminder.
-START_CMD=(echo "Harness has no app to start. Use the AGENTS.md workflow / slash-command flow.")
+# Install: app dependencies (Vitest etc.) for the Shopify app under app/.
+INSTALL_CMD=(bash -c 'cd "'"$ROOT_DIR"'/app" && npm install')
+# Verify: unit tests, the Shopify extension build, then the harness integrity check.
+VERIFY_CMD=(bash -c 'cd "'"$ROOT_DIR"'/app" && npm test && shopify app build && bash "'"$ROOT_DIR"'/scripts/verify-harness.sh"')
+# Start: the storefront widget demo (preview on a dev store).
+START_CMD=(bash -c 'cd "'"$ROOT_DIR"'/app" && shopify app dev')
 
 echo "==> Working directory: $PWD"
+
+# Pin Node version (matches .nvmrc). Warn — don't hard-fail — so verification still runs.
+if [ -f .nvmrc ]; then
+  want="$(cat .nvmrc)"
+  have="$(node -v 2>/dev/null | sed 's/^v//; s/\..*//')"
+  if [ -n "$have" ] && [ "$have" != "$want" ]; then
+    echo "⚠️  Node major $have != .nvmrc ($want). Run: nvm install $want && nvm use" >&2
+  fi
+fi
 
 # Enable repo-managed git hooks (secret-scan pre-commit). Idempotent.
 if [ -d .githooks ] && git rev-parse --git-dir >/dev/null 2>&1; then
