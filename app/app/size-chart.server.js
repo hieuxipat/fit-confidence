@@ -62,7 +62,10 @@ export async function readChart(admin) {
 // writeChart(admin, chart) -> void : persist the chart JSON to the shop metafield.
 // Caller must validate with validateChart() before invoking this.
 export async function writeChart(admin, chart) {
-  const shopRes = await admin.graphql(`#graphql query ShopId { shop { id } }`);
+  const shopRes = await admin.graphql(
+    `#graphql
+    query ShopId { shop { id } }`,
+  );
   const ownerId = (await shopRes.json())?.data?.shop?.id;
 
   const res = await admin.graphql(
