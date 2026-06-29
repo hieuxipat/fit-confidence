@@ -1,91 +1,79 @@
-# Size Finder MVP Implementation Plan
+# Size Finder (Shopify Theme App Extension) Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a demoable "Size Finder" — a TDD-tested `recommendSize()` core plus a storefront-style widget that calls it — in the `fit-confidence` repo.
+**Goal:** Ship a real **Shopify app** whose **Theme App Extension** adds a "Find my size" widget to the product page; the widget calls a TDD-tested `recommendSize()` core.
 
-**Architecture:** A pure, framework-free TypeScript function (`src/lib/sizing.ts`) holds all recommendation logic and is fully unit-tested with Vitest. A thin browser widget (`src/widget/`) collects height/weight/fit and renders the result. A seed size chart lives in `src/data/`. Vite serves the demo; `init.sh` runs install → test → build → harness check.
+**Architecture:** Shopify CLI scaffolds the app + a theme app extension under `app/`. The recommendation logic lives in a single self-contained ESM asset (`extensions/size-finder/assets/sizing.js`) — served to the storefront *and* unit-tested by Vitest (no bundler). A Liquid app block renders the button + modal (markup/CSS matching the prototype) and an inline module imports `sizing.js`. Verification runs `npm test` + `shopify app build` + the harness integrity check.
 
-**Tech Stack:** TypeScript, Vite, Vitest. No Shopify CLI / OAuth (deliberate scope cut — runs standalone, structured to later become a theme extension).
+**Tech Stack:** Shopify CLI 3.85+, Theme App Extension (Liquid + ESM JS + CSS), Vitest, Node 20.
 
 ## Global Constraints
 
-- Node version pinned to **20** via `.nvmrc` (already in repo); `package.json` declares `"engines": { "node": ">=20" }` and `init.sh` warns on mismatch.
-- Units: height in **cm**, weight in **kg**.
-- All recommendation logic stays in `src/lib/sizing.ts` — pure, no DOM/network.
-- TDD: write the failing test first for every logic change.
-- Sizes are exactly `S | M | L | XL`, ordered S→XL.
+- Node pinned to **20** via `.nvmrc` (repo root); the app's `package.json` adds `"engines": { "node": ">=20" }`.
+- Recommendation logic stays in `extensions/size-finder/assets/sizing.js` — pure, no DOM/network, ESM `export`. The size chart constant lives in the **same file** (avoid cross-asset ESM imports, which break under Shopify's hashed asset URLs).
+- The block markup/CSS must look **visually equivalent** to `docs/features/size-finder/prototype/size-finder-widget.html` (UI source of truth).
+- TDD: write the failing test first for every logic change. Sizes are exactly `S | M | L | XL`.
 - `recommendSize` is **total**: out-of-range returns a best estimate; only invalid input throws `InvalidMeasurementError`.
-- Do not weaken the `.claude/` guardrails; commits pass the pre-commit secret hook.
+- Prerequisite (manual, done by the operator): Shopify Partner account + dev store + `shopify auth login`. Do NOT commit `.env`/secrets; do not weaken `.claude/` guardrails.
 
 ---
 
-### Task 1: Project scaffold (TypeScript + Vite + Vitest)
+### Task 1: Scaffold Shopify app + theme app extension + Vitest
 
 **Files:**
-- Create: `package.json`, `tsconfig.json`, `vite.config.ts`
-- Test: `src/smoke.test.ts`
+- Create (via CLI): `app/` (Shopify app), `app/extensions/size-finder/` (theme app extension)
+- Modify: `app/package.json`
+- Create: `app/vitest.config.js`, `app/extensions/size-finder/assets/smoke.test.js`
 
 **Interfaces:**
-- Consumes: nothing.
-- Produces: working `npm test` / `npm run build` / `npm run dev` scripts.
+- Produces: a buildable Shopify app; working `npm test` (Vitest) in `app/`.
 
-- [ ] **Step 1: Create `package.json`**
+- [ ] **Step 1: Authenticate and scaffold the app** (interactive — operator runs)
+
+```bash
+shopify auth login
+shopify app init --path app --name fit-confidence --template none
+```
+Expected: `app/` contains `shopify.app.toml` and a `package.json`. (If the CLI nests differently, treat the folder containing `shopify.app.toml` as the app root and adjust paths below.)
+
+- [ ] **Step 2: Generate the theme app extension**
+
+```bash
+cd app && shopify app generate extension --type theme_app_extension --name size-finder
+```
+Expected: `app/extensions/size-finder/` with `shopify.extension.toml`, `blocks/`, `assets/`, `snippets/`, `locales/` (a sample block is created — we replace it in Task 6).
+
+- [ ] **Step 3: Add Vitest to `app/package.json`**
+
+Add `"test": "vitest run"` to `scripts`, an `engines` field, and Vitest as a dev dependency:
 
 ```json
 {
-  "name": "fit-confidence",
-  "private": true,
-  "type": "module",
-  "engines": {
-    "node": ">=20"
-  },
+  "engines": { "node": ">=20" },
   "scripts": {
-    "dev": "vite",
-    "build": "tsc --noEmit && vite build",
     "test": "vitest run"
   },
   "devDependencies": {
-    "typescript": "^5.4.0",
-    "vite": "^5.2.0",
     "vitest": "^1.6.0"
   }
 }
 ```
+(Merge into the CLI-generated file — keep its existing `dev`/`build`/`deploy` scripts and deps.)
 
-The `engines` field matches `.nvmrc` (Node 20) — keep them in sync.
+- [ ] **Step 4: Create `app/vitest.config.js`**
 
-- [ ] **Step 2: Create `tsconfig.json`**
-
-```json
-{
-  "compilerOptions": {
-    "target": "ES2020",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "types": ["vitest/globals"],
-    "lib": ["ES2020", "DOM", "DOM.Iterable"]
-  },
-  "include": ["src"]
-}
-```
-
-- [ ] **Step 3: Create `vite.config.ts`**
-
-```ts
+```js
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
-  test: { globals: true, environment: 'node' },
+  test: { globals: true, environment: 'node', include: ['extensions/**/*.test.js'] },
 });
 ```
 
-- [ ] **Step 4: Create `src/smoke.test.ts`**
+- [ ] **Step 5: Create `app/extensions/size-finder/assets/smoke.test.js`**
 
-```ts
+```js
 import { describe, it, expect } from 'vitest';
 
 describe('tooling', () => {
@@ -95,254 +83,146 @@ describe('tooling', () => {
 });
 ```
 
-- [ ] **Step 5: Install and run the smoke test**
+- [ ] **Step 6: Install and run the smoke test**
 
-Run: `npm install && npm test`
+Run: `cd app && npm install && npm test`
 Expected: 1 test file, 1 test passing.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
-git add package.json tsconfig.json vite.config.ts src/smoke.test.ts package-lock.json
-git commit -m "chore: scaffold TypeScript + Vite + Vitest project"
+git add app .gitignore
+git commit -m "chore: scaffold Shopify app + size-finder theme extension + Vitest"
 ```
+(Ensure `app/node_modules/` and any `.env` are git-ignored.)
 
 ---
 
-### Task 2: Types and seed size chart
+### Task 2: `recommendSize` — exact match (RED → GREEN)
 
 **Files:**
-- Create: `src/lib/types.ts`, `src/data/tshirt-chart.ts`
-- Test: `src/data/tshirt-chart.test.ts`
+- Create: `app/extensions/size-finder/assets/sizing.js`
+- Test: `app/extensions/size-finder/assets/sizing.test.js`
 
 **Interfaces:**
-- Produces: `Fit`, `Size`, `Measurement`, `SizeRow`, `SizeChart`, `Recommendation`, `InvalidMeasurementError` (from `types.ts`); `TSHIRT_CHART: SizeChart` (from `tshirt-chart.ts`).
+- Produces: `recommendSize(m, chart)`, `TSHIRT_CHART`, `InvalidMeasurementError` (ESM exports). `m = { height_cm, weight_kg, fit }`, returns `{ size, reason, exact }`.
 
-- [ ] **Step 1: Create `src/lib/types.ts`**
+- [ ] **Step 1: Write the failing test `assets/sizing.test.js`**
 
-```ts
-export type Fit = 'slim' | 'regular' | 'relaxed';
-export type Size = 'S' | 'M' | 'L' | 'XL';
-
-export interface Measurement {
-  height_cm: number;
-  weight_kg: number;
-  fit: Fit;
-}
-
-export interface SizeRow {
-  size: Size;
-  height_min: number;
-  height_max: number;
-  weight_min: number;
-  weight_max: number;
-}
-
-export type SizeChart = SizeRow[];
-
-export interface Recommendation {
-  size: Size;
-  reason: string;
-  exact: boolean;
-}
-
-export class InvalidMeasurementError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'InvalidMeasurementError';
-  }
-}
-```
-
-- [ ] **Step 2: Create `src/data/tshirt-chart.ts`**
-
-```ts
-import type { SizeChart } from '../lib/types';
-
-// Contiguous, realistic t-shirt ranges (height cm, weight kg).
-export const TSHIRT_CHART: SizeChart = [
-  { size: 'S',  height_min: 158, height_max: 167, weight_min: 50, weight_max: 60 },
-  { size: 'M',  height_min: 167, height_max: 176, weight_min: 60, weight_max: 72 },
-  { size: 'L',  height_min: 176, height_max: 184, weight_min: 72, weight_max: 84 },
-  { size: 'XL', height_min: 184, height_max: 193, weight_min: 84, weight_max: 96 },
-];
-```
-
-- [ ] **Step 3: Write the failing test `src/data/tshirt-chart.test.ts`**
-
-```ts
+```js
 import { describe, it, expect } from 'vitest';
-import { TSHIRT_CHART } from './tshirt-chart';
-
-describe('TSHIRT_CHART', () => {
-  it('has the four sizes in order', () => {
-    expect(TSHIRT_CHART.map((r) => r.size)).toEqual(['S', 'M', 'L', 'XL']);
-  });
-
-  it('has min <= max for every row', () => {
-    for (const r of TSHIRT_CHART) {
-      expect(r.height_min).toBeLessThanOrEqual(r.height_max);
-      expect(r.weight_min).toBeLessThanOrEqual(r.weight_max);
-    }
-  });
-});
-```
-
-- [ ] **Step 4: Run the test**
-
-Run: `npm test`
-Expected: PASS (chart already defined to satisfy it).
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add src/lib/types.ts src/data/tshirt-chart.ts src/data/tshirt-chart.test.ts
-git commit -m "feat: add size types and seed t-shirt chart"
-```
-
----
-
-### Task 3: `recommendSize` — exact match (RED → GREEN)
-
-**Files:**
-- Create: `src/lib/sizing.ts`
-- Test: `src/lib/sizing.test.ts`
-
-**Interfaces:**
-- Consumes: `Measurement`, `SizeChart`, `Recommendation` from `./types`; `TSHIRT_CHART` from `../data/tshirt-chart`.
-- Produces: `recommendSize(m: Measurement, chart: SizeChart): Recommendation`.
-
-- [ ] **Step 1: Write the failing test `src/lib/sizing.test.ts`**
-
-```ts
-import { describe, it, expect } from 'vitest';
-import { recommendSize } from './sizing';
-import { TSHIRT_CHART } from '../data/tshirt-chart';
+import { recommendSize, TSHIRT_CHART } from './sizing.js';
 
 describe('recommendSize — exact match', () => {
-  it('170cm / 65kg / regular -> M', () => {
+  it('170/65/regular -> M', () => {
     const r = recommendSize({ height_cm: 170, weight_kg: 65, fit: 'regular' }, TSHIRT_CHART);
     expect(r.size).toBe('M');
     expect(r.exact).toBe(true);
     expect(r.reason).toContain('M');
   });
-
-  it('185cm / 90kg / regular -> XL', () => {
-    const r = recommendSize({ height_cm: 185, weight_kg: 90, fit: 'regular' }, TSHIRT_CHART);
-    expect(r.size).toBe('XL');
-    expect(r.exact).toBe(true);
+  it('185/90/regular -> XL', () => {
+    expect(recommendSize({ height_cm: 185, weight_kg: 90, fit: 'regular' }, TSHIRT_CHART).size).toBe('XL');
   });
-
-  it('160cm / 52kg / regular -> S', () => {
-    const r = recommendSize({ height_cm: 160, weight_kg: 52, fit: 'regular' }, TSHIRT_CHART);
-    expect(r.size).toBe('S');
-    expect(r.exact).toBe(true);
+  it('160/52/regular -> S', () => {
+    expect(recommendSize({ height_cm: 160, weight_kg: 52, fit: 'regular' }, TSHIRT_CHART).size).toBe('S');
   });
 });
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `npm test`
-Expected: FAIL — `recommendSize` not exported / module missing.
+Run: `cd app && npm test`
+Expected: FAIL — `./sizing.js` / `recommendSize` missing.
 
-- [ ] **Step 3: Write minimal implementation `src/lib/sizing.ts`**
+- [ ] **Step 3: Write minimal implementation `assets/sizing.js`**
 
-```ts
-import {
-  SizeChart, SizeRow, Measurement, Recommendation,
-} from './types';
+```js
+export const TSHIRT_CHART = [
+  { size: 'S',  height_min: 158, height_max: 167, weight_min: 50, weight_max: 60 },
+  { size: 'M',  height_min: 167, height_max: 176, weight_min: 60, weight_max: 72 },
+  { size: 'L',  height_min: 176, height_max: 184, weight_min: 72, weight_max: 84 },
+  { size: 'XL', height_min: 184, height_max: 193, weight_min: 84, weight_max: 96 },
+];
 
-function contains(row: SizeRow, m: Measurement): boolean {
-  return (
-    m.height_cm >= row.height_min && m.height_cm <= row.height_max &&
-    m.weight_kg >= row.weight_min && m.weight_kg <= row.weight_max
-  );
+function contains(row, m) {
+  return m.height_cm >= row.height_min && m.height_cm <= row.height_max &&
+         m.weight_kg >= row.weight_min && m.weight_kg <= row.weight_max;
 }
 
-export function recommendSize(m: Measurement, chart: SizeChart): Recommendation {
+export function recommendSize(m, chart) {
   const match = chart.find((row) => contains(row, m));
   if (match) {
     return {
       size: match.size,
       exact: true,
       reason: `${m.height_cm}cm & ${m.weight_kg}kg fall in ${match.size} ` +
-        `(${match.height_min}-${match.height_max}cm, ${match.weight_min}-${match.weight_max}kg); ` +
-        `${m.fit} fit kept.`,
+        `(${match.height_min}-${match.height_max}cm, ${match.weight_min}-${match.weight_max}kg); ${m.fit} fit kept.`,
     };
   }
-  // Placeholder until Task 5 adds nearest-match; return first row for now.
+  // Placeholder until Task 4 adds nearest-match.
   return { size: chart[0].size, exact: false, reason: 'no exact match' };
 }
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `npm test`
-Expected: PASS (exact-match tests green).
+Run: `cd app && npm test`
+Expected: PASS (exact-match cases green).
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/lib/sizing.ts src/lib/sizing.test.ts
+git add app/extensions/size-finder/assets/sizing.js app/extensions/size-finder/assets/sizing.test.js
 git commit -m "feat: recommendSize exact-match by height and weight (TDD)"
 ```
 
 ---
 
-### Task 4: `recommendSize` — input validation and errors
+### Task 3: `recommendSize` — validation and errors
 
 **Files:**
-- Modify: `src/lib/sizing.ts`
-- Test: `src/lib/sizing.test.ts` (add cases)
+- Modify: `app/extensions/size-finder/assets/sizing.js`
+- Test: `app/extensions/size-finder/assets/sizing.test.js` (add cases)
 
 **Interfaces:**
-- Consumes: `InvalidMeasurementError` from `./types`.
-- Produces: `recommendSize` throws `InvalidMeasurementError` on bad input and `Error('size chart is empty')` on empty chart.
+- Produces: throws `InvalidMeasurementError` on bad input; `Error('size chart is empty')` on empty chart.
 
-- [ ] **Step 1: Add failing tests to `src/lib/sizing.test.ts`**
+- [ ] **Step 1: Add failing tests**
 
-```ts
-import { InvalidMeasurementError } from './types';
+```js
+import { InvalidMeasurementError } from './sizing.js';
 
 describe('recommendSize — validation', () => {
   it('throws on non-positive height', () => {
-    expect(() => recommendSize({ height_cm: 0, weight_kg: 65, fit: 'regular' }, TSHIRT_CHART))
-      .toThrow(InvalidMeasurementError);
+    expect(() => recommendSize({ height_cm: 0, weight_kg: 65, fit: 'regular' }, TSHIRT_CHART)).toThrow(InvalidMeasurementError);
   });
-
   it('throws on absurd weight', () => {
-    expect(() => recommendSize({ height_cm: 170, weight_kg: 999, fit: 'regular' }, TSHIRT_CHART))
-      .toThrow(InvalidMeasurementError);
+    expect(() => recommendSize({ height_cm: 170, weight_kg: 999, fit: 'regular' }, TSHIRT_CHART)).toThrow(InvalidMeasurementError);
   });
-
   it('throws on invalid fit', () => {
-    expect(() => recommendSize({ height_cm: 170, weight_kg: 65, fit: 'baggy' as never }, TSHIRT_CHART))
-      .toThrow(InvalidMeasurementError);
+    expect(() => recommendSize({ height_cm: 170, weight_kg: 65, fit: 'baggy' }, TSHIRT_CHART)).toThrow(InvalidMeasurementError);
   });
-
   it('throws on empty chart', () => {
-    expect(() => recommendSize({ height_cm: 170, weight_kg: 65, fit: 'regular' }, []))
-      .toThrow('size chart is empty');
+    expect(() => recommendSize({ height_cm: 170, weight_kg: 65, fit: 'regular' }, [])).toThrow('size chart is empty');
   });
 });
 ```
 
-- [ ] **Step 2: Run test to verify the new cases fail**
+- [ ] **Step 2: Run test to verify it fails**
 
-Run: `npm test`
-Expected: FAIL — no validation yet (no throw).
+Run: `cd app && npm test`
+Expected: FAIL — no validation yet.
 
-- [ ] **Step 3: Add `validate()` and call it first in `src/lib/sizing.ts`**
+- [ ] **Step 3: Add the error class + `validate()` and call it first**
 
-Add the import and function, and call `validate` at the top of `recommendSize`:
+Add at the top of `sizing.js`:
 
-```ts
-import {
-  SizeChart, SizeRow, Measurement, Recommendation, InvalidMeasurementError,
-} from './types';
+```js
+export class InvalidMeasurementError extends Error {
+  constructor(message) { super(message); this.name = 'InvalidMeasurementError'; }
+}
 
-function validate(m: Measurement, chart: SizeChart): void {
+function validate(m, chart) {
   if (chart.length === 0) throw new Error('size chart is empty');
   if (!Number.isFinite(m.height_cm) || m.height_cm <= 0 || m.height_cm > 260)
     throw new InvalidMeasurementError(`invalid height_cm: ${m.height_cm}`);
@@ -353,42 +233,33 @@ function validate(m: Measurement, chart: SizeChart): void {
 }
 ```
 
-Then make the first line of `recommendSize`:
-
-```ts
-export function recommendSize(m: Measurement, chart: SizeChart): Recommendation {
-  validate(m, chart);
-  // ... existing match logic ...
-```
+Make the first line of `recommendSize`: `validate(m, chart);`
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `npm test`
-Expected: PASS (all validation cases throw correctly).
+Run: `cd app && npm test`
+Expected: PASS.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/lib/sizing.ts src/lib/sizing.test.ts
+git add app/extensions/size-finder/assets/sizing.js app/extensions/size-finder/assets/sizing.test.js
 git commit -m "feat: validate measurements and reject bad input"
 ```
 
 ---
 
-### Task 5: `recommendSize` — out-of-range nearest match
+### Task 4: `recommendSize` — out-of-range nearest match
 
 **Files:**
-- Modify: `src/lib/sizing.ts`
-- Test: `src/lib/sizing.test.ts` (add cases)
+- Modify: `app/extensions/size-finder/assets/sizing.js`
+- Test: same test file (add a case)
 
-**Interfaces:**
-- Produces: when no row contains the measurement, returns the nearest size with `exact: false`.
+- [ ] **Step 1: Add failing test**
 
-- [ ] **Step 1: Add failing test to `src/lib/sizing.test.ts`**
-
-```ts
+```js
 describe('recommendSize — out of range', () => {
-  it('205cm / 120kg -> nearest XL, exact false', () => {
+  it('205/120 -> nearest XL, exact false', () => {
     const r = recommendSize({ height_cm: 205, weight_kg: 120, fit: 'regular' }, TSHIRT_CHART);
     expect(r.size).toBe('XL');
     expect(r.exact).toBe(false);
@@ -399,22 +270,20 @@ describe('recommendSize — out of range', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `npm test`
-Expected: FAIL — current placeholder returns `chart[0]` ('S') with reason 'no exact match'.
+Run: `cd app && npm test`
+Expected: FAIL — placeholder returns `chart[0]` ('S') / 'no exact match'.
 
-- [ ] **Step 3: Replace the placeholder branch with a `nearest()` helper in `src/lib/sizing.ts`**
+- [ ] **Step 3: Add `nearest()` and replace the placeholder branch**
 
-Add the helper:
+Add helper:
 
-```ts
-function nearest(chart: SizeChart, m: Measurement): SizeRow {
-  let best = chart[0];
-  let bestDist = Infinity;
+```js
+function nearest(chart, m) {
+  let best = chart[0], bestDist = Infinity;
   for (const row of chart) {
     const ch = (row.height_min + row.height_max) / 2;
     const cw = (row.weight_min + row.weight_max) / 2;
-    const dh = (m.height_cm - ch) / 10;
-    const dw = (m.weight_kg - cw) / 8;
+    const dh = (m.height_cm - ch) / 10, dw = (m.weight_kg - cw) / 8;
     const dist = dh * dh + dw * dw;
     if (dist < bestDist) { bestDist = dist; best = row; }
   }
@@ -424,48 +293,43 @@ function nearest(chart: SizeChart, m: Measurement): SizeRow {
 
 Replace the placeholder `return` at the end of `recommendSize` with:
 
-```ts
+```js
   const near = nearest(chart, m);
   return {
     size: near.size,
     exact: false,
-    reason: `${m.height_cm}cm & ${m.weight_kg}kg are outside the chart; ` +
-      `closest size is ${near.size} (estimate).`,
+    reason: `${m.height_cm}cm & ${m.weight_kg}kg are outside the chart; closest size is ${near.size} (estimate).`,
   };
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `npm test`
-Expected: PASS (XL nearest, exact false, reason contains "estimate").
+Run: `cd app && npm test`
+Expected: PASS.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/lib/sizing.ts src/lib/sizing.test.ts
+git add app/extensions/size-finder/assets/sizing.js app/extensions/size-finder/assets/sizing.test.js
 git commit -m "feat: nearest-size estimate for out-of-range measurements"
 ```
 
 ---
 
-### Task 6: `recommendSize` — fit adjustment
+### Task 5: `recommendSize` — fit adjustment
 
 **Files:**
-- Modify: `src/lib/sizing.ts`
-- Test: `src/lib/sizing.test.ts` (add cases)
+- Modify: `app/extensions/size-finder/assets/sizing.js`
+- Test: same test file (add cases)
 
-**Interfaces:**
-- Produces: in an exact match, `slim` near the lower edge nudges one size down; `relaxed` near the upper edge nudges one size up; `regular` never changes the size.
+- [ ] **Step 1: Add failing tests**
 
-- [ ] **Step 1: Add failing tests to `src/lib/sizing.test.ts`**
-
-```ts
+```js
 describe('recommendSize — fit adjustment', () => {
   it('174/68 regular stays M, relaxed -> L', () => {
     expect(recommendSize({ height_cm: 174, weight_kg: 68, fit: 'regular' }, TSHIRT_CHART).size).toBe('M');
     expect(recommendSize({ height_cm: 174, weight_kg: 68, fit: 'relaxed' }, TSHIRT_CHART).size).toBe('L');
   });
-
   it('168/61 slim -> S', () => {
     expect(recommendSize({ height_cm: 168, weight_kg: 61, fit: 'slim' }, TSHIRT_CHART).size).toBe('S');
   });
@@ -474,32 +338,30 @@ describe('recommendSize — fit adjustment', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `npm test`
-Expected: FAIL — fit currently ignored (relaxed/slim still return M).
+Run: `cd app && npm test`
+Expected: FAIL — fit currently ignored.
 
-- [ ] **Step 3: Add `shiftForFit()` and apply it in the exact-match branch of `src/lib/sizing.ts`**
+- [ ] **Step 3: Add `ORDER` + `shiftForFit()` and apply it in the exact-match branch**
 
-Add a size-order constant at the top and the helper:
+Add near the top:
 
-```ts
-import { Size } from './types';
+```js
+const ORDER = ['S', 'M', 'L', 'XL'];
 
-const ORDER: Size[] = ['S', 'M', 'L', 'XL'];
-
-function shiftForFit(size: Size, m: Measurement, row: SizeRow): Size {
+function shiftForFit(size, m, row) {
   if (m.fit === 'regular') return size;
   const span = row.height_max - row.height_min;
   const pos = span > 0 ? (m.height_cm - row.height_min) / span : 0.5;
-  const idx = ORDER.indexOf(size);
-  if (m.fit === 'slim' && pos <= 0.34 && idx > 0) return ORDER[idx - 1];
-  if (m.fit === 'relaxed' && pos >= 0.66 && idx < ORDER.length - 1) return ORDER[idx + 1];
+  const i = ORDER.indexOf(size);
+  if (m.fit === 'slim' && pos <= 0.34 && i > 0) return ORDER[i - 1];
+  if (m.fit === 'relaxed' && pos >= 0.66 && i < ORDER.length - 1) return ORDER[i + 1];
   return size;
 }
 ```
 
-Update the exact-match branch to apply it:
+Update the exact-match branch:
 
-```ts
+```js
   if (match) {
     const finalSize = shiftForFit(match.size, m, match);
     const adjusted = finalSize !== match.size;
@@ -513,206 +375,152 @@ Update the exact-match branch to apply it:
 
 - [ ] **Step 4: Run test to verify all pass**
 
-Run: `npm test`
-Expected: PASS — full suite green (exact, validation, out-of-range, fit).
+Run: `cd app && npm test`
+Expected: PASS — full suite green.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/lib/sizing.ts src/lib/sizing.test.ts
+git add app/extensions/size-finder/assets/sizing.js app/extensions/size-finder/assets/sizing.test.js
 git commit -m "feat: adjust recommended size by fit preference (TDD)"
 ```
 
 ---
 
-### Task 7: Storefront widget
+### Task 6: Theme app block + widget UI (match the prototype)
 
 **Files:**
-- Create: `index.html`, `src/widget/widget.ts`, `src/widget/widget.css`
+- Modify/Create: `app/extensions/size-finder/blocks/size-finder.liquid`
+- Create: `app/extensions/size-finder/assets/size-finder.css`
+- Reference: `docs/features/size-finder/prototype/size-finder-widget.html` (copy the markup/CSS)
 
 **Interfaces:**
-- Consumes: `recommendSize` from `./lib/sizing` (relative to `src/widget/`: `../lib/sizing`); `TSHIRT_CHART` from `../data/tshirt-chart`; `InvalidMeasurementError` from `../lib/types`.
-- Produces: a runnable demo page (`npm run dev`).
+- Consumes: `recommendSize`, `TSHIRT_CHART` from `sizing.js` (imported in an inline module via `asset_url`).
+- Produces: a merchant-addable app block that renders the Find-my-size button + modal.
 
-- [ ] **Step 1: Create `index.html`**
+- [ ] **Step 1: Write `blocks/size-finder.liquid`**
 
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>fit-confidence — Size Finder</title>
-  <link rel="stylesheet" href="/src/widget/widget.css" />
-</head>
-<body>
-  <main class="pdp">
-    <div class="product">
-      <div class="product__image"></div>
-      <div class="product__info">
-        <h1>Classic Cotton T-Shirt</h1>
-        <p class="price">$24.00</p>
-        <button id="find-size" class="btn">Find my size</button>
+Port the prototype markup; load the CSS via `asset_url`; wire behavior in an inline module that imports the tested logic. Keep the `{% schema %}` consistent with the CLI-generated sample block (adjust `target` to match).
+
+```liquid
+{{ 'size-finder.css' | asset_url | stylesheet_tag }}
+
+<div class="sf-wrap">
+  <button type="button" id="sf-open" class="sf-link">📏 Find my size</button>
+
+  <div id="sf-modal" class="sf-modal" hidden role="dialog" aria-modal="true" aria-labelledby="sf-title">
+    <div class="sf-card">
+      <h2 id="sf-title">Find my size</h2>
+      <div class="sf-field"><label for="sf-h">Height (cm)</label><input id="sf-h" type="number" value="170" aria-describedby="sf-err"></div>
+      <div class="sf-field"><label for="sf-w">Weight (kg)</label><input id="sf-w" type="number" value="65" aria-describedby="sf-err"></div>
+      <div class="sf-field"><label for="sf-fit">Fit</label>
+        <select id="sf-fit"><option value="slim">Slim</option><option value="regular" selected>Regular</option><option value="relaxed">Relaxed</option></select>
       </div>
-    </div>
-  </main>
-
-  <div id="modal" class="modal" hidden>
-    <div class="modal__card">
-      <h2>Find my size</h2>
-      <label>Height (cm) <input id="height" type="number" value="170" /></label>
-      <label>Weight (kg) <input id="weight" type="number" value="65" /></label>
-      <label>Fit
-        <select id="fit">
-          <option value="slim">Slim</option>
-          <option value="regular" selected>Regular</option>
-          <option value="relaxed">Relaxed</option>
-        </select>
-      </label>
-      <button id="recommend" class="btn">Recommend</button>
-      <p id="error" class="error" hidden></p>
-      <div id="result" class="result" hidden>
-        <div id="size-badge" class="badge"></div>
-        <p id="reason"></p>
+      <button type="button" id="sf-go" class="sf-btn sf-btn--block">Recommend</button>
+      <p id="sf-err" class="sf-error" role="alert" hidden></p>
+      <div id="sf-result" class="sf-result" hidden>
+        <div id="sf-badge" class="sf-badge"></div>
+        <p id="sf-reason" class="sf-reason"></p>
+        <span id="sf-tag" class="sf-tag" hidden>estimate</span>
       </div>
-      <button id="close" class="btn btn--ghost">Close</button>
+      <button type="button" id="sf-close" class="sf-btn sf-btn--ghost">Close</button>
     </div>
   </div>
+</div>
 
-  <script type="module" src="/src/widget/widget.ts"></script>
-</body>
-</html>
+<script type="module">
+  import { recommendSize, TSHIRT_CHART } from "{{ 'sizing.js' | asset_url }}";
+  const $ = (id) => document.getElementById(id);
+  const modal = $('sf-modal'); let last = null;
+  $('sf-open').addEventListener('click', () => { last = document.activeElement; modal.hidden = false; $('sf-h').focus(); });
+  $('sf-close').addEventListener('click', () => { modal.hidden = true; if (last) last.focus(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !modal.hidden) { modal.hidden = true; if (last) last.focus(); } });
+  $('sf-go').addEventListener('click', () => {
+    const err = $('sf-err'), res = $('sf-result'), tag = $('sf-tag');
+    err.hidden = true; res.hidden = true; tag.hidden = true;
+    try {
+      const rec = recommendSize({ height_cm: Number($('sf-h').value), weight_kg: Number($('sf-w').value), fit: $('sf-fit').value }, TSHIRT_CHART);
+      $('sf-badge').textContent = rec.size; $('sf-reason').textContent = rec.reason; tag.hidden = rec.exact; res.hidden = false;
+    } catch (e) { err.textContent = e.message; err.hidden = false; }
+  });
+</script>
+
+{% schema %}
+{ "name": "Size Finder", "target": "section", "settings": [] }
+{% endschema %}
 ```
 
-- [ ] **Step 2: Create `src/widget/widget.ts`**
+- [ ] **Step 2: Create `assets/size-finder.css`**
 
-```ts
-import { recommendSize } from '../lib/sizing';
-import { TSHIRT_CHART } from '../data/tshirt-chart';
-import { InvalidMeasurementError, Fit } from '../lib/types';
+Copy the `<style>` rules from the prototype (`docs/features/size-finder/prototype/size-finder-widget.html`), renaming selectors to the `sf-` prefixes used above (`.sf-modal`, `.sf-card`, `.sf-field`, `.sf-btn`, `.sf-error`, `.sf-result`, `.sf-badge`, `.sf-tag`). Keep the modal overlay, card layout, badge size, and estimate tag styling visually equivalent.
 
-const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+- [ ] **Step 3: Validate the extension builds**
 
-const modal = $('modal');
-$('find-size').addEventListener('click', () => { modal.hidden = false; });
-$('close').addEventListener('click', () => { modal.hidden = true; });
+Run: `cd app && shopify app build`
+Expected: build succeeds (extension config + assets valid).
 
-$('recommend').addEventListener('click', () => {
-  const error = $('error');
-  const result = $('result');
-  error.hidden = true;
-  result.hidden = true;
+- [ ] **Step 4: Preview on a dev store** (manual)
 
-  const height_cm = Number(($('height') as HTMLInputElement).value);
-  const weight_kg = Number(($('weight') as HTMLInputElement).value);
-  const fit = ($('fit') as HTMLSelectElement).value as Fit;
-
-  try {
-    const rec = recommendSize({ height_cm, weight_kg, fit }, TSHIRT_CHART);
-    $('size-badge').textContent = rec.size;
-    $('reason').textContent = rec.reason + (rec.exact ? '' : ' (estimate)');
-    result.hidden = false;
-  } catch (e) {
-    error.textContent = e instanceof InvalidMeasurementError
-      ? e.message
-      : 'Something went wrong. Please check your input.';
-    error.hidden = false;
-  }
-});
-```
-
-- [ ] **Step 3: Create `src/widget/widget.css`**
-
-```css
-* { box-sizing: border-box; font-family: -apple-system, system-ui, sans-serif; }
-body { margin: 0; background: #f6f6f7; color: #1a1a1a; }
-.pdp { max-width: 880px; margin: 40px auto; }
-.product { display: flex; gap: 32px; background: #fff; padding: 32px; border-radius: 12px; }
-.product__image { width: 280px; height: 320px; background: linear-gradient(135deg,#dfe6f0,#c3d0e0); border-radius: 8px; }
-.price { font-size: 20px; color: #444; }
-.btn { background: #1a1a1a; color: #fff; border: 0; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-size: 15px; }
-.btn--ghost { background: transparent; color: #555; }
-.modal { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; }
-.modal__card { background: #fff; padding: 28px; border-radius: 12px; width: 320px; display: flex; flex-direction: column; gap: 12px; }
-.modal__card label { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.modal__card input, .modal__card select { width: 130px; padding: 6px; }
-.error { color: #b42318; margin: 0; }
-.result { text-align: center; }
-.badge { font-size: 48px; font-weight: 700; }
-```
-
-- [ ] **Step 4: Run the dev server and verify manually**
-
-Run: `npm run dev`
-Expected: open the printed URL → "Find my size" → 170/65/regular → shows **M** and a reason. Try height `0` → inline error.
+Run: `cd app && shopify app dev`
+Expected: follow the URL → theme editor → add the **Size Finder** block to the product page → storefront → "Find my size" → `170/65/regular` → **M**. Try `0` height → inline error.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add index.html src/widget/widget.ts src/widget/widget.css
-git commit -m "feat: storefront size-finder widget calling recommendSize"
+git add app/extensions/size-finder/blocks/size-finder.liquid app/extensions/size-finder/assets/size-finder.css
+git commit -m "feat: Size Finder theme app block + widget UI (matches prototype)"
 ```
 
 ---
 
-### Task 8: Wire verification into the harness and update state
+### Task 7: Wire verification into the harness and record state
 
 **Files:**
 - Modify: `init.sh`, `feature_list.json`
 
 **Interfaces:**
-- Consumes: `npm` scripts from Task 1; existing `scripts/verify-harness.sh`.
-- Produces: `./init.sh` runs install → test → build → harness check; `feature_list.json` records the app feature with evidence.
+- Produces: `./init.sh` runs Node check → `npm install`/`test`/`shopify app build` in `app/` → harness integrity check; `feature_list.json` records `feat-app` with evidence.
 
-- [ ] **Step 1a: Add a Node version check to `init.sh`**
+- [ ] **Step 1: Add the Node check + app build to `init.sh`**
 
-Insert this immediately after the `cd "$ROOT_DIR"` line (before the install/verify command block):
+After `cd "$ROOT_DIR"`, add:
 
 ```bash
-# Pin Node version (matches .nvmrc). Warn — don't hard-fail — so the harness check still runs.
 if [ -f .nvmrc ]; then
-  want="$(cat .nvmrc)"
-  have="$(node -v 2>/dev/null | sed 's/^v//; s/\..*//')"
+  want="$(cat .nvmrc)"; have="$(node -v 2>/dev/null | sed 's/^v//; s/\..*//')"
   if [ -n "$have" ] && [ "$have" != "$want" ]; then
     echo "⚠️  Node major $have != .nvmrc ($want). Run: nvm install $want && nvm use" >&2
   fi
 fi
 ```
 
-- [ ] **Step 1b: Update the command block in `init.sh`**
-
-Replace the install/verify/start command definitions with:
+Set the command block to install + test + build the app, then the harness check:
 
 ```bash
-# Install app dependencies.
-INSTALL_CMD=(npm install)
-# Verify: run unit tests, the build, then the harness integrity check.
-VERIFY_CMD=(bash -c 'npm test && npm run build && bash "'"$ROOT_DIR"'/scripts/verify-harness.sh"')
-# Start: the storefront widget demo.
-START_CMD=(npm run dev)
+INSTALL_CMD=(bash -c 'cd "'"$ROOT_DIR"'/app" && npm install')
+VERIFY_CMD=(bash -c 'cd "'"$ROOT_DIR"'/app" && npm test && shopify app build && bash "'"$ROOT_DIR"'/scripts/verify-harness.sh"')
+START_CMD=(bash -c 'cd "'"$ROOT_DIR"'/app" && shopify app dev')
 ```
 
 - [ ] **Step 2: Run the full startup path**
 
 Run: `./init.sh`
-Expected: deps install, Vitest suite passes, Vite build succeeds, harness check prints `RESULT: PASS`, exit 0. **Save this raw output as demo evidence.**
+Expected: Node check, deps install, Vitest green, `shopify app build` succeeds, harness `RESULT: PASS`, exit 0. **Save this raw output as demo evidence.** (If `shopify app build` needs login, run `shopify auth login` first.)
 
 - [ ] **Step 3: Add the app feature to `feature_list.json`**
 
-Add this object to the `features` array (after `feat-flow`):
+Add to the `features` array (after `feat-flow`):
 
 ```json
 {
   "id": "feat-app",
-  "title": "Size Finder MVP (recommendSize + storefront widget)",
+  "title": "Size Finder Shopify app (theme app extension)",
   "source_idea": "docs/features/size-finder/specs/size-finder-design.md",
   "tasks": [
     {
       "id": "task-app-recommender",
       "title": "recommendSize() core logic, fully TDD",
-      "requirements": [
-        "Exact match by height+weight, fit adjustment, out-of-range estimate, input validation."
-      ],
+      "requirements": ["Exact match, fit adjustment, out-of-range estimate, input validation."],
       "status": "passing",
       "spec_ids": ["size-finder-design"],
       "plan_ref": "docs/features/size-finder/plans/size-finder.md",
@@ -721,48 +529,46 @@ Add this object to the `features` array (after `feat-flow`):
       "dod": [
         { "criterion": "Vitest suite passes (exact, validation, out-of-range, fit)", "met": true, "evidence": "npm test green; ./init.sh PASS" }
       ],
-      "evidence": ["./init.sh RESULT: PASS — tests + build + harness check"],
+      "evidence": ["./init.sh RESULT: PASS — tests + shopify app build + harness check"],
       "notes": "TDD RED->GREEN visible in commit history."
     },
     {
-      "id": "task-app-widget",
-      "title": "Storefront Size Finder widget",
-      "requirements": ["Button -> modal -> form -> calls recommendSize -> shows size + reason."],
+      "id": "task-app-block",
+      "title": "Theme app block + widget UI",
+      "requirements": ["App block renders button + modal; calls recommendSize; matches prototype."],
       "status": "passing",
       "spec_ids": ["size-finder-design"],
       "plan_ref": "docs/features/size-finder/plans/size-finder.md",
       "review": { "rounds": 0, "max_rounds": 3, "last_result": "n/a" },
       "release": { "rounds": 0, "max_rounds": 3, "last_result": "n/a" },
       "dod": [
-        { "criterion": "npm run dev shows M for 170/65/regular", "met": true, "evidence": "manual demo" }
+        { "criterion": "shopify app build succeeds; block shows M for 170/65/regular on dev store", "met": true, "evidence": "shopify app dev demo" }
       ],
-      "evidence": ["manual demo: 170/65/regular -> M"],
-      "notes": "Admin editor cut from MVP (chart hardcoded)."
+      "evidence": ["shopify app dev: block added to PDP, 170/65/regular -> M"],
+      "notes": "UI matches docs/features/size-finder/prototype/. Admin chart editor cut from MVP."
     }
   ]
 }
 ```
 
-- [ ] **Step 4: Validate the state file and harness**
+- [ ] **Step 4: Validate state + harness**
 
 Run: `./init.sh`
-Expected: `feature_list.json matches schema` still green; overall `RESULT: PASS`.
+Expected: `feature_list.json matches schema` green; overall `RESULT: PASS`.
 
 - [ ] **Step 5: Commit**
 
 ```bash
 git add init.sh feature_list.json
-git commit -m "chore: run app tests+build in init.sh; record Size Finder feature"
+git commit -m "chore: run app tests + shopify build in init.sh; record Size Finder feature"
 ```
 
 ---
 
 ## Self-Review
 
-**Spec coverage:**
-- §3 core logic → Tasks 3–6. §4 error handling → Task 4 (+ out-of-range Task 5). §5 data flow → Task 7 widget. §6 testing → Tasks 3–6 (TDD). §7 verification → Task 8. §2 architecture/file layout → Tasks 1, 2, 7. §1 scope cuts (no admin, no real Shopify) → reflected; nothing in plan implements them. ✓ No gaps.
-- §8 demo script → Task 7 step 4 + Task 8 step 2 produce the demo + evidence. ✓
+**Spec coverage:** §1 scope (theme app extension, admin cut) → Tasks 1, 6. §2 architecture (app/extensions, sizing.js ESM) → Tasks 1, 2, 6. §3 logic → Tasks 2–5. §4 errors → Task 3 (+ out-of-range Task 4). §5 data flow → Task 6 block. §6 testing → Tasks 2–5 (TDD). §7 verification → Task 7. §8 demo (`shopify app dev`) → Task 6 step 4 + Task 7 step 2. Prerequisites → Task 1 step 1. ✓
 
-**Placeholder scan:** Task 3 intentionally ships a temporary branch (`exact: false` returning `chart[0]`) that Task 5 replaces — this is real, runnable code with a stated successor, not a "TODO". All other steps contain full code/commands. ✓
+**Placeholder scan:** Task 2 ships a temporary branch replaced in Task 4 (real, runnable, stated successor). Task 6 step 2 says "copy the prototype CSS, rename to `sf-` selectors" — the source file and exact selector list are named, not a vague TODO. The `{% schema %}` is given with a note to align `target` with the CLI sample. No bare TODOs. ✓
 
-**Type consistency:** `recommendSize(m, chart)`, `Recommendation {size, reason, exact}`, `Size`/`Fit`/`Measurement`/`SizeRow`, `TSHIRT_CHART`, `InvalidMeasurementError`, helpers `contains`/`validate`/`nearest`/`shiftForFit`, constant `ORDER` — names and signatures match across Tasks 2–8. ✓
+**Type/name consistency:** `recommendSize(m, chart)` → `{ size, reason, exact }`; `TSHIRT_CHART`; `InvalidMeasurementError`; helpers `contains`/`validate`/`nearest`/`shiftForFit`; `ORDER`; DOM ids `sf-*` consistent between the Liquid markup and the inline module. App root `app/` used consistently in init.sh + commands. ✓

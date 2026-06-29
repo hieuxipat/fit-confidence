@@ -2,9 +2,10 @@
 
 **Date:** 2026-06-29
 **Repo:** fit-confidence (this harness repo)
-**Goal:** A simple, demoable Shopify-style "Size Finder" that recommends a clothing
-size from a shopper's height/weight/fit preference — built to showcase course
-knowledge (TDD, verification, harness, guardrails) for the final demo on 30/06.
+**Goal:** A simple, demoable **Shopify app (Theme App Extension)** "Size Finder" that
+recommends a clothing size from a shopper's height/weight/fit preference — built to
+showcase course knowledge (TDD, verification, harness, guardrails) for the final
+demo on 30/06.
 
 ## 1. Objective & scope
 
@@ -12,49 +13,61 @@ A shopper on a product page taps **"Find my size"**, enters height (cm), weight
 (kg) and a fit preference, and gets a recommended size (S/M/L/XL) **with a
 reason**. This reduces wrong-size returns (fashion return rate ~30%).
 
-The centerpiece is a **pure, fully test-driven recommendation function**. The UI
-is a lightweight storefront-style widget that calls it. The piece is structured
-so it can later be dropped into a real Shopify theme app extension, but the demo
-runs standalone (no Partner account / OAuth / tunnel) to stay within the
-deadline.
+This ships as a **real Shopify app** via a **Theme App Extension** — the widget is
+an app block a merchant adds to the product page in the theme editor. The
+centerpiece is a **pure, fully test-driven recommendation function** that the
+block's JS calls. No OAuth backend / database is needed for a storefront-only
+theme extension.
 
 ### In scope (MVP)
+- A **Shopify app + Theme App Extension** (app block) installable on a dev store.
 - `recommendSize()` core logic (TDD) — **the demo + B3 evidence centerpiece**.
 - One seed size chart (t-shirt: S/M/L/XL by height & weight range).
-- A runnable storefront-style widget: button → modal → form → result.
-- Verification wired into `init.sh` (tests + harness integrity check).
+- Storefront widget block: button → modal → form → result, matching the prototype.
+- Verification wired into `init.sh` (tests + extension check + harness integrity).
 
 ### Out of scope (deliberate cuts — stated in the demo as "reading complexity")
 - AI/ML recommender, OCR size import, billing tiers, analytics, i18n.
-- Real Shopify install / embedded admin OAuth.
-- Merchant admin editor — the size chart is hardcoded/seeded JSON. (Mentioned as
-  a "difficulty / next step" in the presentation.)
+- Embedded **admin** app (Polaris) for merchants to edit the chart — chart is a
+  seeded constant in the extension. (Mentioned as a "difficulty / next step".)
+- Any server/database — the extension is static (Liquid + JS asset).
+
+### Prerequisites (manual, user-provided — interactive logins)
+- Shopify **Partner account** (free) + a **development store** (free).
+- Shopify CLI (already installed: `shopify 3.85.5`); `shopify auth login`.
+- `shopify app dev` to tunnel + preview the block on the dev store theme.
 
 ## 2. Architecture
 
-Small TypeScript project, Vite for the dev server + build, Vitest for tests.
+Shopify app scaffolded with the Shopify CLI; a Theme App Extension holds the
+storefront block. The recommendation logic is plain **ES-module JS** so it is
+served directly as a theme asset **and** unit-tested with Vitest — no bundler.
 
 ```
-src/
-  lib/
-    sizing.ts          # recommendSize() — pure, no I/O. The TDD core.
-    sizing.test.ts     # Vitest unit tests (written first, RED→GREEN→REFACTOR).
-    types.ts           # SizeChart, Measurement, Recommendation, Fit types.
-  data/
-    tshirt-chart.ts    # seed size chart (typed constant).
-  widget/
-    index.html         # storefront-style product page mock + "Find my size".
-    widget.ts          # modal + form + calls recommendSize(), renders result.
-    widget.css         # PDP-like styling.
-index.html             # entry that loads the widget demo.
+quan-ly... (app root, from `shopify app init`)
+  shopify.app.toml             # app config (CLI-generated)
+  package.json                 # scripts: test (vitest), build/dev via shopify
+  extensions/
+    size-finder/
+      shopify.extension.toml   # theme app extension config
+      blocks/
+        size-finder.liquid     # app block: button + modal markup, schema settings
+      assets/
+        sizing.js              # recommendSize() — pure ESM. The TDD core.
+        sizing.test.js         # Vitest unit tests (RED→GREEN→REFACTOR).
+        tshirt-chart.js        # seed size chart constant.
+        size-finder.js         # UI wiring: open modal, read form, call recommendSize, render.
+        size-finder.css        # styling — matches the prototype.
 ```
 
 **Boundaries / why:**
-- `lib/sizing.ts` is a **pure function** with no DOM/network — so it is trivially
-  unit-testable and is the same code a future theme extension would import.
-- `widget/` only handles input/output and calls the library — it can change
-  without touching tested logic.
-- `data/` is separate so swapping/extending charts never touches logic.
+- `assets/sizing.js` is a **pure function** (no DOM/network) → trivially unit-testable
+  by Vitest, and served as-is to the storefront. One file is both source and asset.
+- `size-finder.js` only handles DOM input/output and calls `sizing.js` — UI can
+  change without touching tested logic.
+- `tshirt-chart.js` is separate so swapping/extending charts never touches logic.
+- The block markup/CSS must look equivalent to
+  `docs/features/size-finder/prototype/size-finder-widget.html` (UI source of truth).
 
 ## 3. Core logic — `recommendSize`
 
@@ -134,23 +147,28 @@ Representative cases (commit shows the RED→GREEN progression):
 
 `init.sh` runs, in order:
 1. `npm install` (app deps)
-2. `npm test` (Vitest — must pass)
-3. `npm run build` (Vite build — must succeed)
+2. `npm test` (Vitest on `assets/sizing.test.js` — must pass)
+3. `shopify app build` (validates the extension config/build — must succeed)
 4. `scripts/verify-harness.sh` (existing harness integrity check)
 
 Raw output of `./init.sh` is the demo's verification evidence. `feature_list.json`
-gains a `feat-app` feature with tasks (chart, recommender-TDD, widget, verify),
-each moved to `passing` only with recorded evidence.
+gains a `feat-app` feature with tasks (scaffold, recommender-TDD, block/widget,
+verify), each moved to `passing` only with recorded evidence.
 
 ## 8. Demo script (maps to CHUAN-BI-DEMO.md)
 
-`npm run dev` → open the product page → "Find my size" → enter `170/65/regular`
-→ shows **M** + reason. Then show `npm test` green output and `git log` of the
-RED→GREEN commits.
+`shopify app dev` → open the dev-store theme editor → add the **Size Finder** app
+block to the product page → on the storefront tap "Find my size" → enter
+`170/65/regular` → shows **M** + reason. Then show `npm test` green output and the
+`git log` RED→GREEN commits. (Fallback if tunnel/login fails on demo day: open the
+prototype HTML to show the same UI + run `npm test` for the logic.)
 
 ## 9. Risks
 
-- **Time:** keep UI plain; logic + tests first so there is always a demoable core
-  even if the widget is unfinished.
+- **Time:** logic + tests first (TDD core) so there is always a demoable, verifiable
+  centerpiece even if the Liquid block is unfinished.
+- **Shopify setup risk (deadline):** Partner account / dev store / `shopify auth login`
+  / tunnel can eat time or fail on demo day → mitigated by the prototype HTML +
+  `npm test` fallback in §8, and by building the testable core before the block.
 - **Fabricated sizing numbers:** the seed chart uses realistic, documented ranges;
   tests lock expected outputs so AI-suggested values can't silently drift.

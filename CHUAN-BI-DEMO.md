@@ -49,12 +49,14 @@
 
 ## PHẦN B — SCOPE MVP APP (chốt từ feature map)
 
-Flow nhỏ nhất demo được end-to-end: *"Buyer: find size"* bám 4 hub feature:
+> 🛍️ **Đây là Shopify app THẬT** — đóng gói dưới dạng **Theme App Extension** (app block merchant kéo vào product page). Không cần OAuth/DB; lõi logic vẫn TDD. (Đã cân nhắc: storefront widget chứ không phải admin → theme app extension là surface đúng.)
 
-- [ ] **F010 — Size chart record:** 1 size chart mẫu (áo thun S/M/L/XL theo chiều cao–cân nặng). Seed JSON là đủ.
-- [ ] **F034/F033 — Rule-based recommender (LÕI):** `recommendSize(height, weight, fit, chart)` → trả size + lý do. **← bắt buộc TDD.**
-- [ ] **F040 — Storefront widget:** nút "Find my size" → modal nhập số đo → hiện size gợi ý.
-- [ ] **F011 — Admin (nếu kịp):** trang Polaris cho merchant sửa chart. Thiếu giờ → hardcode, đưa vào "khó khăn".
+Flow nhỏ nhất demo được end-to-end: *"Buyer: find size"* bám các hub feature:
+
+- [ ] **F010 — Size chart record:** 1 size chart mẫu (áo thun S/M/L/XL theo chiều cao–cân nặng), là constant trong asset `sizing.js`.
+- [ ] **F034/F033 — Rule-based recommender (LÕI):** `recommendSize(m, chart)` → trả size + lý do. **← bắt buộc TDD.**
+- [ ] **F040 — Storefront widget = Theme App Block:** nút "Find my size" trên PDP → modal nhập số đo → hiện size gợi ý. **← đây là phần làm nó thành Shopify app thật.**
+- [ ] ~~**F011 — Admin Polaris (sửa chart):**~~ **CẮT khỏi MVP** — chart hardcode trong extension. Đưa vào "khó khăn / next step". (App vẫn là Shopify app thật nhờ theme extension, không phụ thuộc admin.)
 
 **Cắt khỏi MVP (nói rõ — điểm cộng vì thể hiện đọc được độ phức tạp):** AI/ML recommender (F032), OCR import (F017), billing tier (F004), auto-translate (F027), analytics (F045-47). Lý do từ feature map: clone full = 6–12 tháng, rating "Complex" → MVP chỉ đánh vào lõi.
 
@@ -95,16 +97,15 @@ Flow nhỏ nhất demo được end-to-end: *"Buyer: find size"* bám 4 hub feat
 
 | Bước (plan task) | Làm gì | Kiến thức áp dụng | Lession |
 |---|---|---|---|
-| **0. Commit tài liệu** | Commit restructure `docs/features/` + prototype + bản demo doc → push | Harness = system-of-record; planning = artifact | L7, L2 |
-| **1. Scaffold** (Task 1) | TS + Vite + Vitest + smoke test | Setup verify; AI generate scaffold (tool-use loop) | L7, L1 |
-| **2. Types + chart** (Task 2) | `types.ts` + seed `tshirt-chart.ts` | Domain modeling — đóng gói tri thức cho agent | L1 |
-| **3. recommendSize exact** (Task 3) ⭐ | RED→GREEN: 170/65→M, 185/90→XL | **TDD** vòng đỏ–xanh | **L3** |
-| **4. Validation** (Task 4) | Input xấu → throw (test trước) | TDD + nghĩ như guardrail cho dữ liệu | L3 (+L4) |
-| **5. Out-of-range** (Task 5) | Ngoài bảng → nearest estimate | TDD edge case — "AI hay quên biên" | **L3** |
-| **6. Fit adjustment** (Task 6) | slim/relaxed nudges size | TDD + REFACTOR giữ behavior | **L3** |
-| **7. Widget** (Task 7) | **hiện thực hóa prototype** đã có (`prototype/size-finder-widget.html`) → button→modal→form→kết quả | Realize prototype (nguồn sự thật UI); ReAct loop | L7, L1 |
-| **8. Wire init.sh + state** (Task 8) | init.sh chạy test+build+harness; update `feature_list.json` | **Verification = raw output**; DoD; harness | L3, L7 |
-| **9. Thực thi plan** | Chạy plan qua subagent-driven / inline | **Delegation** + **Subagent architecture** | L2, L5 |
+| **0. Chuẩn bị Shopify** (tự làm) | Tạo Partner account + dev store; `! shopify auth login` | Môi trường (đăng nhập tương tác) | L7 |
+| **1. Scaffold** (Task 1) | `shopify app init` + `generate extension` (theme app extension) + Vitest | Setup verify; CLI scaffold Shopify app | L7, L1 |
+| **2. recommendSize exact** (Task 2) ⭐ | RED→GREEN: 170/65→M, 185/90→XL (`assets/sizing.js` ESM) | **TDD** vòng đỏ–xanh | **L3** |
+| **3. Validation** (Task 3) | Input xấu → throw (test trước) | TDD + guardrail cho dữ liệu | L3 (+L4) |
+| **4. Out-of-range** (Task 4) | Ngoài bảng → nearest estimate | TDD edge case — "AI hay quên biên" | **L3** |
+| **5. Fit adjustment** (Task 5) | slim/relaxed nudges size | TDD + REFACTOR giữ behavior | **L3** |
+| **6. Theme app block + UI** (Task 6) | `size-finder.liquid` + CSS bám **prototype**; inline module import `sizing.js`; `shopify app build` | Realize prototype; **Shopify app thật** (theme extension); ReAct loop | **L7**, L1 |
+| **7. Wire init.sh + state** (Task 7) | init.sh: Node check → `npm test` + `shopify app build` + harness; update `feature_list.json` | **Verification = raw output**; DoD; harness | L3, L7 |
+| **8. Thực thi plan** | Chạy plan qua subagent-driven / inline | **Delegation** + **Subagent architecture** | L2, L5 |
 | **10. Debug khi kẹt** | reproduce → ≥3 hypothesis → root cause → regression test | **Systematic Debugging** 6 bước | **L3** |
 | **11. Slide + demo + submit** (sáng T3 30/06) | Video 2–3', slide 6 phần, submit Form | Cross-model / team adoption; tổng kết | L7 |
 
