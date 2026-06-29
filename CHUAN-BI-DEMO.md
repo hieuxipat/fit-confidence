@@ -56,7 +56,7 @@ Flow nhỏ nhất demo được end-to-end: *"Buyer: find size"* bám các hub f
 - [ ] **F010 — Size chart record:** 1 size chart mẫu (áo thun S/M/L/XL theo chiều cao–cân nặng), là constant trong asset `sizing.js`.
 - [ ] **F034/F033 — Rule-based recommender (LÕI):** `recommendSize(m, chart)` → trả size + lý do. **← bắt buộc TDD.**
 - [ ] **F040 — Storefront widget = Theme App Block:** nút "Find my size" trên PDP → modal nhập số đo → hiện size gợi ý. **← đây là phần làm nó thành Shopify app thật.**
-- [ ] ~~**F011 — Admin Polaris (sửa chart):**~~ **CẮT khỏi MVP** — chart hardcode trong extension. Đưa vào "khó khăn / next step". (App vẫn là Shopify app thật nhờ theme extension, không phụ thuộc admin.)
+- [ ] **F011 — Admin Polaris (sửa chart):** **Phase 2 (stretch)** — đã chuẩn bị sẵn **spec + plan + prototype** (`admin-size-chart-*`), lưu chart qua **shop metafield** (không DB) để storefront đọc lại. Build SAU khi widget xong; nếu hết giờ → vẫn là Shopify app thật nhờ theme extension (chart hardcode), admin để "next step".
 
 **Cắt khỏi MVP (nói rõ — điểm cộng vì thể hiện đọc được độ phức tạp):** AI/ML recommender (F032), OCR import (F017), billing tier (F004), auto-translate (F027), analytics (F045-47). Lý do từ feature map: clone full = 6–12 tháng, rating "Complex" → MVP chỉ đánh vào lõi.
 
@@ -90,6 +90,7 @@ Flow nhỏ nhất demo được end-to-end: *"Buyer: find size"* bám các hub f
 | Pin Node 20 (`.nvmrc` + engines + check trong init.sh) | Môi trường tái lập được | **L7** |
 | Tổ chức `docs/features/<feature>/{plans,specs,prototype}` | Repo là spec, có cấu trúc | **L7** |
 | Design brief (design-brainstorm) + **prototype UI** (`size-finder-widget.html`) = nguồn sự thật giao diện | "Repo là spec cho cả UI" — prototype trong harness | **L7 + L5** ⭐ |
+| Admin F011 (Phase 2): **spec + plan + prototype Polaris** (`admin-size-chart-*`) đã chuẩn bị sẵn (metafield, chưa build) | Planning trước; prototype Polaris bằng `design-prototype` | **L2 + L5 + L7** |
 
 ### ⬜ Việc CÒN LẠI — bám sát plan `docs/features/size-finder/plans/size-finder.md`
 
@@ -105,11 +106,12 @@ Flow nhỏ nhất demo được end-to-end: *"Buyer: find size"* bám các hub f
 | **5. Fit adjustment** (Task 5) | slim/relaxed nudges size | TDD + REFACTOR giữ behavior | **L3** |
 | **6. Theme app block + UI** (Task 6) | `size-finder.liquid` + CSS bám **prototype**; inline module import `sizing.js`; `shopify app build` | Realize prototype; **Shopify app thật** (theme extension); ReAct loop | **L7**, L1 |
 | **7. Wire init.sh + state** (Task 7) | init.sh: Node check → `npm test` + `shopify app build` + harness; update `feature_list.json` | **Verification = raw output**; DoD; harness | L3, L7 |
-| **8. Thực thi plan** | Chạy plan qua subagent-driven / inline | **Delegation** + **Subagent architecture** | L2, L5 |
+| **8. Thực thi plan storefront** | Chạy `plans/size-finder.md` qua subagent-driven / inline | **Delegation** + **Subagent architecture** | L2, L5 |
+| **9. (Phase 2) Admin F011** | Theo `plans/admin-size-chart.md`: embedded Remix + `validateChart` (TDD) + shop metafield + trang Polaris. **Chỉ làm sau khi widget xong** | TDD + Polaris + custom data (metafield) | L3, L5 |
 | **10. Debug khi kẹt** | reproduce → ≥3 hypothesis → root cause → regression test | **Systematic Debugging** 6 bước | **L3** |
 | **11. Slide + demo + submit** (sáng T3 30/06) | Video 2–3', slide 6 phần, submit Form | Cross-model / team adoption; tổng kết | L7 |
 
-> ⏱️ Bước 1–8 plan đã viết sẵn code từng step → chạy tuần tự là xong. **Bước 3–6 là lõi ăn điểm L3 (TDD)** — nhớ commit theo nhịp RED→GREEN để lịch sử git nói hộ câu chuyện.
+> ⏱️ Bước 1–7 (plan storefront) đã viết sẵn code từng step → chạy tuần tự là xong. **Bước 2–5 là lõi ăn điểm L3 (TDD)** — nhớ commit theo nhịp RED→GREEN để lịch sử git nói hộ câu chuyện. **Bước 9 (admin) là Phase 2 stretch** — chỉ làm nếu kịp.
 
 ---
 
