@@ -1,5 +1,7 @@
 # Size Finder Admin (size-chart editor) Implementation Plan
 
+> **STATUS (2026-06-29):** Implementation COMPLETE & build-verified. Tasks 1–5 done — embedded **React Router** app (the CLI's successor to the Remix template) scaffolded via `shopify app init`, consolidated to `app/`; `validateChart` TDD; `readChart`/`writeChart`/`ensureSizeChartDefinition`; admin route `app/app/routes/app.size-chart.jsx`; theme block already reads the metafield. Deviations from the plan as written: route is `.jsx` using **Polaris web components** (`s-*`) not `@shopify/polaris` React; the metafield definition is created idempotently in code (`ensureSizeChartDefinition`, storefront `PUBLIC_READ`) instead of a manual operator GraphQL step. **Only remaining:** Task 6's live `shopify app dev` admin↔storefront demo (operator) → then `task-app-admin` → `passing`.
+>
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans. Steps use checkbox (`- [ ]`) syntax.
 > **Phase 2 / stretch** — execute only after `size-finder.md` (storefront widget) is shippable and verifies. Spec: `../specs/admin-size-chart-design.md`.
 
