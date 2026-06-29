@@ -4,14 +4,43 @@
 // We intentionally use a custom (merchant-owned) namespace rather than the
 // reserved `$app` namespace so the theme app extension can read it from Liquid
 // as `shop.metafields.fit_confidence.size_chart.value`. That read requires the
-// metafield DEFINITION to grant storefront read access — created once as an
-// operator/live-store step (see docs/features/size-finder/plans/admin-size-chart.md
-// Task 3 Step 3). Writing the value here does not need the definition, but the
-// storefront read does.
+// metafield DEFINITION to grant storefront read access, created idempotently by
+// ensureSizeChartDefinition() on admin load (no manual operator step needed).
 import { DEFAULT_CHART } from './default-chart.js';
 
 const NS = 'fit_confidence';
 const KEY = 'size_chart';
+
+// ensureSizeChartDefinition(admin) -> void : idempotently create the metafield
+// definition so the value is readable from the storefront/theme via Liquid
+// (`shop.metafields.fit_confidence.size_chart`). Safe to call on every admin
+// load — a pre-existing definition returns a TAKEN userError, which we ignore.
+export async function ensureSizeChartDefinition(admin) {
+  const res = await admin.graphql(
+    `#graphql
+    mutation CreateSizeChartDef($definition: MetafieldDefinitionInput!) {
+      metafieldDefinitionCreate(definition: $definition) {
+        createdDefinition { id }
+        userErrors { field message code }
+      }
+    }`,
+    {
+      variables: {
+        definition: {
+          name: 'Size Finder size chart',
+          namespace: NS,
+          key: KEY,
+          type: 'json',
+          ownerType: 'SHOP',
+          access: { storefront: 'PUBLIC_READ' },
+        },
+      },
+    },
+  );
+  const errors = (await res.json())?.data?.metafieldDefinitionCreate?.userErrors ?? [];
+  const fatal = errors.filter((e) => e.code !== 'TAKEN');
+  if (fatal.length) throw new Error(fatal.map((e) => e.message).join('; '));
+}
 
 // readChart(admin) -> chart[] : the saved chart, or DEFAULT_CHART when absent/invalid.
 export async function readChart(admin) {
