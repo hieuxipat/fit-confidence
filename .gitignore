@@ -8,3 +8,7 @@ build/
 
 # Tài liệu bài học nội bộ — không đẩy lên git
 docs/lessions/
+
+# Playwright CLI artifacts + Chrome profile
+.playwright-cli/
+chrome-profile/
