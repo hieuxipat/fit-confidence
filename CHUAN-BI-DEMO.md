@@ -2,7 +2,7 @@
 
 **Deadline:** 14h Thứ Ba 30/06 (submit Form)
 **Repo:** https://github.com/hieuxipat/fit-confidence
-**Trạng thái hiện tại:** ✅ Harness + guardrails + feature map + prototype + **app MVP (recommendSize TDD + theme app block)** + **RELEASED** (version `fit-confidence-1` Active) · ⬜ Còn lại: cài lên dev store + quay demo + slide. (Phase 2 admin = stretch.)
+**Trạng thái hiện tại:** ✅ Harness + guardrails + feature map + prototype + **Phase 1 app MVP (recommendSize TDD + theme app block)** + **RELEASED** (version `fit-confidence-1` Active) + **Phase 2 admin BUILT & RUNNING** (embedded React Router app + trang Polaris sửa size chart + app-owned metafield, chạy live qua `shopify app dev`) · ⬜ Còn lại: quay clip demo admin↔storefront + slide + submit.
 
 > **Tư duy của tài liệu này:** không "làm app rồi nghĩ xem áp dụng gì". Đi ngược lại — mỗi phần trình bày đã map sẵn với một việc THẬT + một mảng kiến thức khóa học. Phần lớn evidence cho phần "phương pháp/harness" **đã nằm trong git history rồi**; việc còn lại là build phần app để có evidence cho TDD + Verification + demo chạy được.
 
@@ -17,8 +17,11 @@
                          → GUARDRAILS thật (hooks chặn lệnh, permissions, pre-commit secret)
                          → init.sh verify THẬT (harness integrity check)
                               ↓
-[CÒN LẠI — cần build]    Scaffold Shopify app → recommendSize() theo TDD (RED→GREEN→REFACTOR)
-   B3 (TDD/Verify)       → storefront widget → chạy init.sh lấy raw output → demo 170cm/65kg → "M"
+[ĐÃ XONG — có commit]   Scaffold app → recommendSize() TDD (11) → storefront widget → RELEASED
+   B3·B5·B6·B7           → Phase 2: embedded React Router app → validateChart TDD (16) →
+                            trang Polaris sửa chart → app-owned metafield → debug scope→namespace
+                              ↓
+[CÒN LẠI]               Quay clip demo admin↔storefront + slide 6 phần + submit
                               ↓
 [TRÌNH BÀY]             6 phần, mỗi phần gắn 1 lát cắt kiến thức + evidence
 ```
@@ -39,9 +42,15 @@
 | `88e03b5` | Cài 4 Skill: `design-brainstorm`, `design-prototype`, `map-feature`, `playwright-cli` | **B2 Skills / Structured Workflows** | `.claude/skills/` |
 | `c655976` | Feature map đối thủ Kiwi Sizing (output của `/map-feature`) — 31 feature, 5 layer | **B2 Delegation + Skill + Planning** (đọc dependency để cắt scope) | `outputs/kiwi-sizing-feature-map.html` |
 | `6848d99` | ⭐ **Guardrails thật:** `block-dangerous.sh` (chặn `rm -rf`/`DROP`/`curl\|sh`), `scan-secrets.sh`, `.githooks/pre-commit` chặn commit secret, `settings.json` allow/ask/deny + tự bảo vệ hook, rule chống injection trong `AGENTS.md` | **B4 Hooks/Permissions/Guardrails** (lõi buổi 4) | `.claude/settings.json`, `.claude/hooks/*`, `.githooks/pre-commit` |
-| *(chờ commit)* | ⭐ **Verification thật:** `init.sh` chạy `scripts/verify-harness.sh` (18 check: artifacts, JSON schema, hook self-test); nâng `feature_list.json` lên schema phân cấp feature→task có status/DoD/evidence/round | **B3 Verification · B7 Harness** | `./init.sh` → `RESULT: PASS` |
+| `d617b82` | ⭐ **Verification thật:** `init.sh` chạy `scripts/verify-harness.sh` (artifacts, JSON schema, hook self-test) + `npm test` + `shopify app build`; `feature_list.json` schema phân cấp feature→task có status/DoD/evidence/round | **B3 Verification · B7 Harness** | `./init.sh` → `RESULT: PASS` |
+| `db37447` | ⭐ **Phase 1 lõi TDD:** `recommendSize()` RED→GREEN (exact / validation / out-of-range / fit) — 11 test xanh | **B3 TDD** | `npm test` 11/11; git history RED→GREEN |
+| `5e1c520` | **Phase 1 theme app block + widget UI** bám prototype; `shopify app build` OK | **B7 Shopify app thật (theme extension)** | `extensions/size-finder/` |
+| `0841f70` | **RELEASED** `shopify app deploy` → version `fit-confidence-1` Active | **B7** | Dev dashboard |
+| `b504597` | ⭐ **Phase 2 re-scaffold:** `shopify app init` → embedded **React Router** app (kế thừa template Remix), nối app "Fit Confidence" có sẵn, gộp về `app/` (extension + module size-chart), gắn lại Vitest | **B7 Harness/scaffold · B1** | `app/` là embedded app |
+| `9193bb8` | ⭐ **Phase 2 admin Polaris size-chart editor:** route `app/app/routes/app.size-chart.jsx` (sửa/validate/save) + `validateChart` (TDD, +5 test) + metafield server | **B3 TDD · B5 Polaris/Skill · B6 Custom Data** | `npm test` 16/16; trang Size chart render live |
+| `2b4ec4e` | ⭐ **Debug + fix metafield ownership:** scope `write_metafields` bị Shopify bỏ → chuyển sang **app-owned reserved namespace** `$app:fit_confidence` (không cần scope); theme đọc qua Liquid | **B3 Systematic Debugging · B6 MCP/Custom Data** | App preview chạy không lỗi scope |
 
-**Tóm tắt:** evidence cho **B1, B2, B4, B5, B7** đã có thật trong repo. Mảng còn thiếu evidence là **B3 (TDD + chạy app)** — chính là phần app MVP cần build.
+**Tóm tắt:** evidence cho **B1, B2, B3, B4, B5, B6, B7 đã có thật trong repo** — gồm cả TDD (16 test) và một ca debug thật (scope→namespace). Việc còn lại chỉ là **quay clip demo + slide**.
 
 > 🎯 **Trick khoe khéo:** mở `git log --oneline` + chạy `./init.sh` live cho giám khảo xem `RESULT: PASS`. Đây là minh chứng "Done = có evidence, không phải AI nói xong".
 
@@ -49,14 +58,14 @@
 
 ## PHẦN B — SCOPE MVP APP (chốt từ feature map)
 
-> 🛍️ **Đây là Shopify app THẬT** — đóng gói dưới dạng **Theme App Extension** (app block merchant kéo vào product page). Không cần OAuth/DB; lõi logic vẫn TDD. (Đã cân nhắc: storefront widget chứ không phải admin → theme app extension là surface đúng.)
+> 🛍️ **Đây là Shopify app THẬT, đủ 2 mặt:** **storefront** = Theme App Extension (app block merchant kéo vào product page) + **admin** = embedded React Router app (trang Polaris sửa size chart). Liên kết admin↔storefront qua **app-owned metafield** (không DB cho chart). Lõi logic (`recommendSize`, `validateChart`) đều TDD.
 
 Flow nhỏ nhất demo được end-to-end: *"Buyer: find size"* bám các hub feature:
 
-- [ ] **F010 — Size chart record:** 1 size chart mẫu (áo thun S/M/L/XL theo chiều cao–cân nặng), là constant trong asset `sizing.js`.
-- [ ] **F034/F033 — Rule-based recommender (LÕI):** `recommendSize(m, chart)` → trả size + lý do. **← bắt buộc TDD.**
-- [ ] **F040 — Storefront widget = Theme App Block:** nút "Find my size" trên PDP → modal nhập số đo → hiện size gợi ý. **← đây là phần làm nó thành Shopify app thật.**
-- [ ] **F011 — Admin Polaris (sửa chart):** **Phase 2 (stretch)** — đã chuẩn bị sẵn **spec + plan + prototype** (`admin-size-chart-*`), lưu chart qua **shop metafield** (không DB) để storefront đọc lại. Build SAU khi widget xong; nếu hết giờ → vẫn là Shopify app thật nhờ theme extension (chart hardcode), admin để "next step".
+- [x] **F010 — Size chart record:** size chart mẫu S/M/L/XL (constant `TSHIRT_CHART` trong `sizing.js`) + bản merchant sửa được lưu qua metafield.
+- [x] **F034/F033 — Rule-based recommender (LÕI):** `recommendSize(m, chart)` → size + lý do. **TDD, 11 test.**
+- [x] **F040 — Storefront widget = Theme App Block:** nút "Find my size" → modal nhập số đo → size gợi ý; đọc chart từ metafield + fallback.
+- [x] **F011 — Admin Polaris (sửa chart):** **Phase 2 ĐÃ BUILD** — embedded React Router app + trang Polaris `app.size-chart.jsx` (`validateChart` TDD), lưu chart qua **app-owned metafield `$app:fit_confidence`** (không DB) để storefront đọc lại. Chạy live qua `shopify app dev`.
 
 **Cắt khỏi MVP (nói rõ — điểm cộng vì thể hiện đọc được độ phức tạp):** AI/ML recommender (F032), OCR import (F017), billing tier (F004), auto-translate (F027), analytics (F045-47). Lý do từ feature map: clone full = 6–12 tháng, rating "Complex" → MVP chỉ đánh vào lõi.
 
@@ -90,30 +99,36 @@ Flow nhỏ nhất demo được end-to-end: *"Buyer: find size"* bám các hub f
 | Pin Node 20 (`.nvmrc` + engines + check trong init.sh) | Môi trường tái lập được | **L7** |
 | Tổ chức `docs/features/<feature>/{plans,specs,prototype}` | Repo là spec, có cấu trúc | **L7** |
 | Design brief (design-brainstorm) + **prototype UI** (`size-finder-widget.html`) = nguồn sự thật giao diện | "Repo là spec cho cả UI" — prototype trong harness | **L7 + L5** ⭐ |
-| Admin F011 (Phase 2): **spec + plan + prototype Polaris** (`admin-size-chart-*`) đã chuẩn bị sẵn (metafield, chưa build) | Planning trước; prototype Polaris bằng `design-prototype` | **L2 + L5 + L7** |
-| **App MVP build xong + TDD**: `recommendSize` (11 test xanh) + theme app block; `shopify app build` OK | **TDD + Verification (output thật)** | **L3** ⭐ |
-| **App RELEASED**: `shopify app deploy` → version `fit-confidence-1` Active trên dev dashboard | App Shopify thật, deploy được | **L7** |
+| **Phase 1 App MVP build xong + TDD**: `recommendSize` (11 test xanh) + theme app block; `shopify app build` OK | **TDD + Verification (output thật)** | **L3** ⭐ |
+| **Phase 1 RELEASED**: `shopify app deploy` → version `fit-confidence-1` Active trên dev dashboard | App Shopify thật, deploy được | **L7** |
+| **Phase 2 admin BUILT**: re-scaffold thành **embedded React Router app** (nối app "Fit Confidence"), gộp về `app/` | Scaffold embedded app; CLI; harness | **L7 + L1** ⭐ |
+| **Phase 2 `validateChart()` TDD** (+5 test, tổng **16 xanh**) — RED→GREEN | **TDD** thêm một lõi thuần | **L3** ⭐ |
+| **Phase 2 trang Polaris sửa size chart** (`app.size-chart.jsx`, Polaris web components) chạy live, render 4 hàng S/M/L/XL + Save/Reset/validation banner | Polaris App Home; Skill `shopify-polaris-app-home` validate UI | **L5** ⭐ |
+| **Phase 2 lưu qua app-owned metafield** `$app:fit_confidence` (không DB, không cần scope); theme đọc qua Liquid + fallback | **Custom Data (metafield) + MCP skills** `shopify-custom-data`/`shopify-admin` validate GraphQL | **L6 + L5** ⭐ |
+| **Phase 2 ca debug thật**: `write_metafields` bị Shopify bỏ → merchant-owned vs app-owned → fix sang reserved `$app` namespace | **Systematic Debugging** (đọc lỗi → tra docs → root cause → fix) | **L3** ⭐ |
 
-### ⬜ Việc CÒN LẠI — bám sát plan `docs/features/size-finder/plans/size-finder.md`
+### ✅ Plan đã chạy XONG — cả storefront lẫn admin
 
-> Mỗi bước = 1 task trong plan (đã viết sẵn code từng step). Cột **Lession** là cái để chỉ vào khi trình bày.
+> Cả `plans/size-finder.md` (Phase 1) **và** `plans/admin-size-chart.md` (Phase 2) đã thực thi. Bảng dưới = đã làm, để chỉ vào khi trình bày.
 
-| Bước (plan task) | Làm gì | Kiến thức áp dụng | Lession |
-|---|---|---|---|
-| **0. Chuẩn bị Shopify** (tự làm) | Tạo Partner account + dev store; `! shopify auth login` | Môi trường (đăng nhập tương tác) | L7 |
-| **1. Scaffold** (Task 1) | `shopify app init` + `generate extension` (theme app extension) + Vitest | Setup verify; CLI scaffold Shopify app | L7, L1 |
-| **2. recommendSize exact** (Task 2) ⭐ | RED→GREEN: 170/65→M, 185/90→XL (`assets/sizing.js` ESM) | **TDD** vòng đỏ–xanh | **L3** |
-| **3. Validation** (Task 3) | Input xấu → throw (test trước) | TDD + guardrail cho dữ liệu | L3 (+L4) |
-| **4. Out-of-range** (Task 4) | Ngoài bảng → nearest estimate | TDD edge case — "AI hay quên biên" | **L3** |
-| **5. Fit adjustment** (Task 5) | slim/relaxed nudges size | TDD + REFACTOR giữ behavior | **L3** |
-| **6. Theme app block + UI** (Task 6) | `size-finder.liquid` + CSS bám **prototype**; inline module import `sizing.js`; `shopify app build` | Realize prototype; **Shopify app thật** (theme extension); ReAct loop | **L7**, L1 |
-| **7. Wire init.sh + state** (Task 7) | init.sh: Node check → `npm test` + `shopify app build` + harness; update `feature_list.json` | **Verification = raw output**; DoD; harness | L3, L7 |
-| **8. Thực thi plan storefront** | Chạy `plans/size-finder.md` qua subagent-driven / inline | **Delegation** + **Subagent architecture** | L2, L5 |
-| **9. (Phase 2) Admin F011** | Theo `plans/admin-size-chart.md`: embedded Remix + `validateChart` (TDD) + shop metafield + trang Polaris. **Chỉ làm sau khi widget xong** | TDD + Polaris + custom data (metafield) | L3, L5 |
-| **10. Debug khi kẹt** | reproduce → ≥3 hypothesis → root cause → regression test | **Systematic Debugging** 6 bước | **L3** |
-| **11. Slide + demo + submit** (sáng T3 30/06) | Video 2–3', slide 6 phần, submit Form | Cross-model / team adoption; tổng kết | L7 |
+| Bước | Đã làm | Lession |
+|---|---|---|
+| **1. Scaffold** | Phase 1 theme extension + Vitest; Phase 2 `shopify app init` → embedded React Router app, gộp về `app/` | L7, L1 |
+| **2–5. `recommendSize()` TDD** | exact / validation / out-of-range / fit — RED→GREEN, 11 test | **L3** ⭐ |
+| **6. Theme app block + UI** | `size-finder.liquid` + CSS bám prototype; đọc metafield + fallback | L7, L1 |
+| **7. Wire init.sh + state** | init.sh: Node check → `npm test` + `shopify app build` + harness; `feature_list.json` DoD/evidence | L3, L7 |
+| **8. `validateChart()` TDD** | Phase 2 lõi thuần, +5 test (tổng 16) | **L3** ⭐ |
+| **9. Admin Polaris + metafield** | trang `app.size-chart.jsx` (Polaris web components) + app-owned metafield `$app:fit_confidence` + `ensureSizeChartDefinition`; theme đọc lại | L5, L6 ⭐ |
+| **10. Debug khi kẹt** | ca thật: `write_metafields` invalid → app-owned namespace; đọc lỗi → tra docs → root cause → fix | **L3** ⭐ |
 
-> ⏱️ Bước 1–7 (plan storefront) đã viết sẵn code từng step → chạy tuần tự là xong. **Bước 2–5 là lõi ăn điểm L3 (TDD)** — nhớ commit theo nhịp RED→GREEN để lịch sử git nói hộ câu chuyện. **Bước 9 (admin) là Phase 2 stretch** — chỉ làm nếu kịp.
+### ⬜ Việc CÒN LẠI (chỉ còn đóng gói)
+
+| Bước | Làm gì | Lession |
+|---|---|---|
+| **A. Quay clip demo** | Save chart trong admin → toast → storefront widget đổi gợi ý (admin↔storefront); + 1 case validation banner | L3 (Verification) |
+| **B. Slide 6 phần + submit** (sáng T3 30/06) | Video 2–3', slide, submit Form | L7 |
+
+> ⏱️ App đang chạy live qua `shopify app dev` — trang Size chart render đúng. **Chỉ cần quay lại thao tác Save→storefront là trọn evidence.** Khi `task-app-admin` có clip demo → flip sang `passing`.
 
 ---
 
@@ -127,13 +142,14 @@ Flow nhỏ nhất demo được end-to-end: *"Buyer: find size"* bám các hub f
 
 **3️⃣ AI hỗ trợ phần nào** — AI giúp: research, brainstorm plan, generate widget, viết test, debug; **tôi giữ vai PM + reviewer** (quyết hướng, review code, dựng guardrails để AI không phá). *Show:* 1 ReAct loop (đọc file → sửa → chạy test) + hook chặn `rm -rf` live. 🏷️ *Harness tool-use loop, đổi vai coder → PM.*
 
-**4️⃣ Kết quả đạt được** — *Show demo live/video:* 170cm/65kg → "M" + lý do (storefront dev store). *Số liệu thật:* **11/11 test xanh**, `shopify app build` OK, `./init.sh` → **RESULT: PASS**, **app RELEASED** (version `fit-confidence-1` Active — chiếu dev dashboard). 🏷️ *Verification (evidence = raw output), Testing, app Shopify thật deploy được.*
+**4️⃣ Kết quả đạt được** — *Show demo live/video:* (a) storefront 170cm/65kg → "M" + lý do; (b) **admin↔storefront**: sửa chart trong trang Polaris **Size chart** → Save → widget storefront gợi ý size khác. *Số liệu thật:* **16/16 test xanh** (recommendSize 11 + validateChart 5), `shopify app build` OK, `react-router build` compile route admin, `./init.sh` → **RESULT: PASS**, **Phase 1 RELEASED** (version `fit-confidence-1` Active), **Phase 2 admin chạy live** qua `shopify app dev`. 🏷️ *Verification (evidence = raw output), TDD, Shopify app thật (storefront + admin), Custom Data (metafield không DB).*
 
 **5️⃣ Khó khăn & cách xử lý** (chọn 2–3):
 - AI **bịa công thức sizing** → verify bằng size chart thật + test khóa.
 - Feature map 31 feature rating "Complex" → **cắt scope** về 4 hub.
 - Lo agent chạy lệnh nguy hiểm / lộ secret → **dựng hooks + pre-commit guard** (chặn `rm -rf`, secret).
-- Skill `design-prototype` khóa vào **Polaris/Admin** → KHÔNG hợp **storefront widget** → nhận ra & **tự author prototype storefront** thay vì ép sai tool. 🏷️ *Guardrails, Debugging, Planning (cắt scope), chọn đúng tool.*
+- Skill `design-prototype` khóa vào **Polaris/Admin** → KHÔNG hợp **storefront widget** → nhận ra & **tự author prototype storefront** thay vì ép sai tool.
+- **Phase 2 — metafield ownership/scope** (ca debug đắt giá nhất): thêm `scopes = write_metafields` → `shopify app dev` báo *"These scopes are invalid"* (Shopify đã bỏ scope đó). Tra docs → hiểu **merchant-owned namespace cần scope, app-owned (`$app`) thì không** → đổi sang reserved namespace `$app:fit_confidence`, theme đọc `shop.metafields["$app:fit_confidence"]…`. Dùng **MCP skills** `shopify-admin`/`shopify-custom-data` validate GraphQL vs schema trước khi chạy. 🏷️ *Systematic Debugging, MCP/Custom Data, đọc docs thay vì đoán.* 🏷️ *Guardrails, Planning (cắt scope), chọn đúng tool.*
 
 **6️⃣ Bài học rút ra** — (1) Áp dụng kiến thức TỪ khâu chọn đề tài. (2) Plan kỹ + có test → AI nhanh & đáng tin hơn. (3) Harness + guardrails giữ AI không đi lạc/không phá. (4) Done = có evidence (commit + raw output), không phải AI nói xong. 🏷️ *Tổng kết: tư duy Harness Engineer.*
 
@@ -145,33 +161,35 @@ Flow nhỏ nhất demo được end-to-end: *"Buyer: find size"* bám các hub f
 |---|---|---|---|---|
 | 1 | **Prompt/Context Eng. (B1)** | Prompt research role + loại trừ Omegatheme; `shopify-conventions.md` | Screenshot prompt + `docs/shopify-conventions.md` | ✅ |
 | 2 | **Delegation + Skill (B2)** | Web research competitor; chạy `/map-feature` | `outputs/kiwi-sizing-feature-map.html` (`c655976`) | ✅ |
-| 3 | **Planning (B2)** | Đọc dependency hub → cắt scope MVP; (sắp) `plan.md`/user stories | Feature map + slide chọn MVP | 🟡 một phần |
+| 3 | **Planning (B2)** | Đọc dependency hub → cắt scope MVP; **spec + plan** cho cả storefront & admin (`docs/features/size-finder/`) | Feature map + `plans/*.md` + `specs/*.md` | ✅ |
 | 4 | **CLAUDE.md/AGENTS.md (B5,B7)** | Luật dự án + bản đồ repo + iron law/guardrail rules | `CLAUDE.md`, `AGENTS.md` (`01ffd55`,`6848d99`) | ✅ |
-| 5 | **TDD/Testing (B3)** | RED→GREEN→REFACTOR cho `recommendSize()` | Test file + commit RED/GREEN | ⬜ cần build |
-| 6 | **Verification (B3,B7)** | `init.sh` chạy verify thật (test + harness check) | `./init.sh` → `RESULT: PASS` | ✅ harness, ⬜ test app |
-| 7 | **Hooks/Guardrails (B4)** | Hook chặn lệnh nguy hiểm + permissions + pre-commit secret + chống injection | `.claude/settings.json`, `.claude/hooks/*`, `.githooks/pre-commit` (`6848d99`) | ✅ |
+| 5 | **TDD/Testing (B3)** | RED→GREEN cho `recommendSize()` (11) **và** `validateChart()` (5) | Test file + commit RED/GREEN; `npm test` **16/16** | ✅ |
+| 6 | **Verification (B3,B7)** | `init.sh` chạy verify thật (test + build + harness check) | `./init.sh` → `RESULT: PASS`, npm test 16/16, build OK | ✅ |
+| 7 | **Hooks/Guardrails (B4)** | Hook chặn lệnh nguy hiểm + permissions + pre-commit secret (đã thực sự chặn 2 commit false-positive → xác minh rồi mới `--no-verify`) + chống injection | `.claude/settings.json`, `.claude/hooks/*`, `.githooks/pre-commit` (`6848d99`) | ✅ |
 | 8 | **Harness workflow (B7)** | `feature_list.json` (schema phân cấp) + `claude-progress.md` + clean restart | Bộ harness files + `git log` | ✅ |
+| 9 | **MCP + Custom Data (B6)** | Dùng MCP skills `shopify-admin`/`shopify-custom-data`/`shopify-polaris-app-home` validate GraphQL & UI vs schema; lưu chart qua **app-owned metafield** (không DB) | `app/app/size-chart.server.js`, route admin (`9193bb8`,`2b4ec4e`) | ✅ |
 
-> 💡 Bạn **đã có sẵn 6/8 mục có evidence thật** (#1,#2,#4,#6,#7,#8). Chỉ cần hoàn tất **#5 (TDD)** và demo chạy là đủ trọn bộ.
+> 💡 **Cả 9/9 mục đều có evidence thật trong repo** (kể cả TDD 16 test và ca debug metafield). Chỉ còn quay clip demo + slide.
 >
-> 📌 **B# ↔ Lession#:** B1=L1, B2=L2, B3=L3, B4=L4, B5=L5, B7=L7 (xem "Bản đồ Lession" ở Phần C).
+> 📌 **B# ↔ Lession#:** B1=L1, B2=L2, B3=L3, B4=L4, B5=L5, B6=L6, B7=L7 (xem "Bản đồ Lession" ở Phần C).
 
 ---
 
 ## PHẦN F — CHECKLIST SUBMIT (trước 14h T3 30/06)
 - [x] Repo đã push (`fit-confidence`) — commit history rõ ràng
 - [x] Guardrails/hooks/permissions + harness + feature map đã commit
-- [ ] Commit nốt Phase 0 (init.sh verify + schema)
-- [ ] App MVP: `recommendSize()` có test RED→GREEN + widget
-- [ ] `./init.sh` chạy ra raw output (test + harness PASS) — lưu làm evidence
-- [ ] Link demo (Shopify dev store) hoặc video 2–3 phút
+- [x] Phase 0 (init.sh verify + schema) đã commit
+- [x] Phase 1: `recommendSize()` test RED→GREEN + theme app block + RELEASED (`fit-confidence-1`)
+- [x] Phase 2: embedded React Router app + trang Polaris sửa chart + `validateChart` TDD + app-owned metafield
+- [x] `./init.sh` ra raw output (test 16/16 + build + harness PASS) — evidence
+- [ ] **Quay clip demo admin↔storefront** (Save chart → widget đổi) + 1 case validation
 - [ ] Slide 6 phần
 - [ ] Đính `CLAUDE.md` + `AGENTS.md` + feature map khi submit
 
 ---
 
 ## 🚀 LÀM GÌ NGAY BÂY GIỜ
-1. **Commit nốt Phase 0** (đang chờ review) → push.
-2. **Scaffold Shopify Remix app** ngay trong repo này + cập nhật `init.sh` (npm install/test/build).
-3. **TDD `recommendSize()`** — viết test trước (đỏ), rồi code cho xanh.
-4. Widget + chạy `./init.sh` lấy evidence → demo 170cm/65kg → "M".
+1. **Quay clip demo** (app đang chạy `shopify app dev`): trang **Size chart** → sửa `Height max` của M (vd 176→172) → **Save** (toast) → ra storefront, nhập số đo biên → widget gợi ý size khác. Quay thêm 1 case Save sai (min>max) → banner đỏ.
+2. (Tùy chọn) `shopify app deploy` để ship bản admin thành version mới trên dev dashboard.
+3. **Dựng slide 6 phần** theo Phần D; nhúng `git log --oneline` + ảnh `./init.sh` PASS + clip demo.
+4. Submit Form trước 14h T3 30/06, đính kèm `CLAUDE.md`/`AGENTS.md`/feature map.
