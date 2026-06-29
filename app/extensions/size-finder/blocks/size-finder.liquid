@@ -1,6 +1,6 @@
 {{ 'size-finder.css' | asset_url | stylesheet_tag }}
 
-<div class="sf-wrap">
+<div class="sf-wrap" id="sf-wrap-{{ block.id }}">
   <button type="button" class="sf-link" data-sf-open>📏 {{ block.settings.button_label | default: 'Find my size' }}</button>
 
   <div class="sf-modal" data-sf-modal hidden role="dialog" aria-modal="true" aria-labelledby="sf-title-{{ block.id }}">
@@ -34,7 +34,9 @@
 <script type="module">
   import { recommendSize, TSHIRT_CHART } from "{{ 'sizing.js' | asset_url }}";
 
-  const root = document.currentScript.closest('.sf-wrap') || document;
+  // NOTE: in <script type="module"> document.currentScript is null, so scope by
+  // the block's unique wrapper id instead (also supports multiple blocks).
+  const root = document.getElementById("sf-wrap-{{ block.id }}") || document;
   const q = (sel) => root.querySelector(sel);
 
   // Merchant-edited chart (metafield) with fallback to the built-in default.
