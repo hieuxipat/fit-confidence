@@ -5,7 +5,7 @@
 - Repository root: harness-agent (remote: fit-confidence)
 - Standard startup path: `./init.sh`
 - Standard verification path: `init.sh` -> `cd app && npm test && shopify app build` + `scripts/verify-harness.sh`
-- Last verification result: `./init.sh` -> RESULT: PASS (2026-06-29) — npm test 17/17, shopify app build OK, harness healthy
+- Last verification result: `./init.sh` -> RESULT: PASS (2026-06-29) — npm test 21/21, shopify app build OK, harness healthy
 - Size Finder Phase 1 (storefront): DONE + RELEASED — `recommendSize` TDD (11 tests) + theme app block, deployed (now superseded by `fit-confidence-2`)
 - Size Finder Phase 2 admin (`task-app-admin`): ✅ PASSING — verified live end-to-end on hieu-test-app-1. Embedded React Router app, admin Polaris size-chart editor (edit/validate/save → toast), chart in APP-OWNED metafield `$app:fit_confidence` (no DB/scope), theme block reads it with fallback. Deployed as version `fit-confidence-2`.
 - Current highest-priority unfinished work: NONE on code — Size Finder (Phase 1 + Phase 2) is complete & deployed. Remaining is non-code: record demo clip + slides for the course submission (see CHUAN-BI-DEMO.md).
@@ -73,3 +73,18 @@
 - Commits: fe16040, 8edac72, 94ef60f + this state record.
 - Known risk or unresolved issue: none for code. Embedded admin only works while `shopify app dev` (or real hosting) runs — fine for the live demo. Remaining = record clip + slides (non-code).
 - Next best step: record the 2–3' demo clip + build slides per CHUAN-BI-DEMO.md; (optional) `shopify app deploy` again to clear the theme-check warning into a fit-confidence-3.
+
+### Session 005
+
+- Date: 2026-06-30
+- Goal: Polish the admin Home into a dashboard, and apply codegraph as a structured-context tool with real evidence.
+- Completed:
+  - **Home dashboard** (`app/app/routes/app._index.jsx`): replaced the stock template Home (its `productCreate` demo needed `write_products` → "Access denied") with a setup-guide + roadmap dashboard. 3 steps: Edit size chart (badge Customized/Using default via new `readChartStatus`), Open theme editor (Shopify deep link `addAppBlockId={extension uid}/size-finder&target=mainSection`, built from shop domain — no hardcoded store/theme id), Try it on storefront (first product `onlineStoreUrl`, graceful fallback). Added `scopes = read_products`.
+  - **codegraph** applied at the Phase-2 "understand-before-extend" point: operator ran `codegraph init` (27 files / 168 nodes / 236 edges); I ran `codegraph_explore` + `codegraph_impact recommendSize` via MCP. The graph flagged `writeChart`/`readChartStatus` as having no covering tests.
+  - **Closed that test gap** (tool→action loop): added 4 behavioural tests to `app/app/size-chart.server.test.js` — `writeChart` resolves on success / throws on metafieldsSet userErrors; `readChartStatus` reports `customized` + returns saved chart vs DEFAULT fallback.
+  - Documented codegraph placement + judgment ("selective use on a small codebase") in CHUAN-BI-DEMO.md; gitignored `.codegraph/`.
+- Verification run: `./init.sh` → RESULT: PASS — `npm test` **21/21**, `shopify app build` OK, harness healthy.
+- Evidence captured: CHUAN-BI-DEMO.md evidence row #10 (codegraph) + flow step 8b; size-chart.server.test.js.
+- Commits: Home dashboard + theme-editor deep link + codegraph evidence + behavioural tests (see git log).
+- Known risk or unresolved issue: `read_products` scope needs a one-time re-grant on next `shopify app dev`; the Home loader falls back gracefully if not yet granted. codegraph's "no covering tests" flag persists (its heuristic / index built at init time) even after adding tests — the real coverage is `npm test` 21/21, not the flag.
+- Next best step: re-grant `read_products` (restart `shopify app dev` → approve); then record the demo clip + slides. Code is complete.

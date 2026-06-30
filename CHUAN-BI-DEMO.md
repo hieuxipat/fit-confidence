@@ -143,7 +143,7 @@ Flow nhỏ nhất demo được end-to-end: *"Buyer: find size"* bám các hub f
 
 **3️⃣ AI hỗ trợ phần nào** — AI giúp: research, brainstorm plan, generate widget, viết test, debug; **tôi giữ vai PM + reviewer** (quyết hướng, review code, dựng guardrails để AI không phá). *Show:* 1 ReAct loop (đọc file → sửa → chạy test) + hook chặn `rm -rf` live. 🏷️ *Harness tool-use loop, đổi vai coder → PM.*
 
-**4️⃣ Kết quả đạt được** — *Show demo live/video* (đã verify thật trên `hieu-test-app-1`): (a) storefront 170cm/65kg → "M" + lý do; (b) **admin↔storefront**: sửa chart trong trang Polaris **Size chart** → Save (toast) → widget storefront gợi ý size khác. *Số liệu thật:* **17/17 test xanh** (recommendSize 11 + validateChart 5 + GraphQL regression 1), `shopify app build` OK (theme check sạch), `react-router build` compile route admin, `./init.sh` → **RESULT: PASS**, **DEPLOYED** version `fit-confidence-2` (storefront widget chạy trên CDN Shopify, không cần server). 🏷️ *Verification (evidence = raw output), TDD, Shopify app thật (storefront + admin), Custom Data (metafield không DB), Systematic Debugging (3 bug live).*
+**4️⃣ Kết quả đạt được** — *Show demo live/video* (đã verify thật trên `hieu-test-app-1`): (a) storefront 170cm/65kg → "M" + lý do; (b) **admin↔storefront**: sửa chart trong trang Polaris **Size chart** → Save (toast) → widget storefront gợi ý size khác. *Số liệu thật:* **21/21 test xanh** (recommendSize 11 + validateChart 5 + server behaviour 4 + GraphQL regression 1), `shopify app build` OK (theme check sạch), `react-router build` compile route admin, `./init.sh` → **RESULT: PASS**, **DEPLOYED** version `fit-confidence-2` (storefront widget chạy trên CDN Shopify, không cần server). 🏷️ *Verification (evidence = raw output), TDD, Shopify app thật (storefront + admin), Custom Data (metafield không DB), Systematic Debugging (3 bug live).*
 
 **5️⃣ Khó khăn & cách xử lý** (chọn 2–3):
 - AI **bịa công thức sizing** → verify bằng size chart thật + test khóa.
@@ -170,12 +170,12 @@ Flow nhỏ nhất demo được end-to-end: *"Buyer: find size"* bám các hub f
 | 2 | **Delegation + Skill (B2)** | Web research competitor; chạy `/map-feature` | `outputs/kiwi-sizing-feature-map.html` (`c655976`) | ✅ |
 | 3 | **Planning (B2)** | Đọc dependency hub → cắt scope MVP; **spec + plan** cho cả storefront & admin (`docs/features/size-finder/`) | Feature map + `plans/*.md` + `specs/*.md` | ✅ |
 | 4 | **CLAUDE.md/AGENTS.md (B5,B7)** | Luật dự án + bản đồ repo + iron law/guardrail rules | `CLAUDE.md`, `AGENTS.md` (`01ffd55`,`6848d99`) | ✅ |
-| 5 | **TDD/Testing (B3)** | RED→GREEN cho `recommendSize()` (11) **và** `validateChart()` (5) + regression GraphQL (1) | Test file + commit RED/GREEN; `npm test` **17/17** | ✅ |
-| 6 | **Verification (B3,B7)** | `init.sh` chạy verify thật (test + build + harness check) | `./init.sh` → `RESULT: PASS`, npm test 17/17, build OK | ✅ |
+| 5 | **TDD/Testing (B3)** | RED→GREEN cho `recommendSize()` (11) **và** `validateChart()` (5) + server behaviour (4) + regression GraphQL (1) | Test file + commit RED/GREEN; `npm test` **21/21** | ✅ |
+| 6 | **Verification (B3,B7)** | `init.sh` chạy verify thật (test + build + harness check) | `./init.sh` → `RESULT: PASS`, npm test 21/21, build OK | ✅ |
 | 7 | **Hooks/Guardrails (B4)** | Hook chặn lệnh nguy hiểm + permissions + pre-commit secret (đã thực sự chặn 2 commit false-positive → xác minh rồi mới `--no-verify`) + chống injection | `.claude/settings.json`, `.claude/hooks/*`, `.githooks/pre-commit` (`6848d99`) | ✅ |
 | 8 | **Harness workflow (B7)** | `feature_list.json` (schema phân cấp) + `claude-progress.md` + clean restart | Bộ harness files + `git log` | ✅ |
 | 9 | **MCP + Custom Data (B6)** | Dùng MCP skills `shopify-admin`/`shopify-custom-data`/`shopify-polaris-app-home` validate GraphQL & UI vs schema; lưu chart qua **app-owned metafield** (không DB) | `app/app/size-chart.server.js`, route admin (`9193bb8`,`2b4ec4e`) | ✅ |
-| 10 | **codegraph — context tool / MCP (B2,B6)** | `codegraph init` (27 files · 168 nodes · 236 edges · 214ms) → `codegraph_explore` (26 symbols/12 files, **blast-radius**) + `codegraph_impact recommendSize`. Query graph thay vì scan file; dùng **chọn lọc** trên app nhỏ (judgment). Bonus: graph **tự flag `writeChart`/`readChartStatus` = "no covering tests"** — lỗ hổng test thật. | Output MCP `mcp__codegraph__*` (chụp terminal `init` + kết quả explore/impact) | ✅ |
+| 10 | **codegraph — context tool / MCP (B2,B6)** | `codegraph init` (27 files · 168 nodes · 236 edges · 214ms) → `codegraph_explore` (26 symbols/12 files, **blast-radius**) + `codegraph_impact recommendSize`. Query graph thay vì scan file; dùng **chọn lọc** trên app nhỏ (judgment). Bonus (vòng lặp tool→action): graph **flag `writeChart`/`readChartStatus` = "no covering tests"** → mình **đóng gap bằng 4 test hành vi** (throw khi userErrors, cờ `customized`) → `npm test` **21/21**. | Output MCP `mcp__codegraph__*` (chụp `init` + explore/impact) + `app/app/size-chart.server.test.js` | ✅ |
 
 > 💡 **Cả 9/9 mục đều có evidence thật trong repo** (kể cả TDD 16 test và ca debug metafield). Chỉ còn quay clip demo + slide.
 >
@@ -190,7 +190,7 @@ Flow nhỏ nhất demo được end-to-end: *"Buyer: find size"* bám các hub f
 - [x] Phase 1: `recommendSize()` test RED→GREEN + theme app block + RELEASED (`fit-confidence-1`)
 - [x] Phase 2: embedded React Router app + trang Polaris sửa chart + `validateChart` TDD + app-owned metafield
 - [x] Demo LIVE end-to-end trên `hieu-test-app-1` + **deployed `fit-confidence-2`** + fix 3 bug live
-- [x] `./init.sh` ra raw output (test 17/17 + build + harness PASS) — evidence
+- [x] `./init.sh` ra raw output (test 21/21 + build + harness PASS) — evidence
 - [ ] **Quay clip demo admin↔storefront** (Save chart → widget đổi) + 1 case validation
 - [ ] Slide 6 phần
 - [ ] Đính `CLAUDE.md` + `AGENTS.md` + feature map khi submit

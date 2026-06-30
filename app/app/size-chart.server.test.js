@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { writeChart, readChart, ensureSizeChartDefinition } from './size-chart.server.js';
+import { writeChart, readChart, readChartStatus, ensureSizeChartDefinition } from './size-chart.server.js';
+import { DEFAULT_CHART } from './default-chart.js';
 
 // Strip GraphQL line comments the same way Shopify's parser does — everything
 // after a `#` on a line is a comment. A query written as a single line starting
@@ -29,6 +30,26 @@ function mockAdmin() {
   };
 }
 
+// Mock that returns a response shaped per the operation, so behaviour (not just
+// query strings) can be asserted. Branches on the operation in the query text.
+function makeAdmin({ chartValue = null, setErrors = [] } = {}) {
+  return {
+    async graphql(query) {
+      let data = {};
+      if (query.includes('metafieldsSet')) {
+        data = { metafieldsSet: { metafields: [{ id: 'gid://x/1' }], userErrors: setErrors } };
+      } else if (query.includes('ShopId')) {
+        data = { shop: { id: 'gid://shopify/Shop/1' } };
+      } else if (query.includes('metafield(namespace')) {
+        data = { shop: { chart: { jsonValue: chartValue } } };
+      } else if (query.includes('metafieldDefinitionCreate')) {
+        data = { metafieldDefinitionCreate: { createdDefinition: { id: 'd' }, userErrors: [] } };
+      }
+      return { async json() { return { data }; } };
+    },
+  };
+}
+
 const CHART = [
   { size: 'S', height_min: 158, height_max: 167, weight_min: 50, weight_max: 60 },
   { size: 'M', height_min: 167, height_max: 176, weight_min: 60, weight_max: 72 },
@@ -49,5 +70,31 @@ describe('size-chart.server GraphQL operations', () => {
       expect(stripped.length).toBeGreaterThan(0); // not fully commented out
       expect(stripped).toMatch(/\{/); // has a real selection set
     }
+  });
+});
+
+describe('writeChart', () => {
+  it('resolves when metafieldsSet returns no userErrors', async () => {
+    await expect(writeChart(makeAdmin(), CHART)).resolves.toBeUndefined();
+  });
+
+  it('throws with the message when metafieldsSet returns userErrors', async () => {
+    const admin = makeAdmin({ setErrors: [{ field: ['value'], message: 'value is invalid JSON' }] });
+    await expect(writeChart(admin, CHART)).rejects.toThrow(/value is invalid JSON/);
+  });
+});
+
+describe('readChartStatus', () => {
+  it('reports customized and returns the saved chart when the metafield is set', async () => {
+    const saved = [{ size: 'S', height_min: 100, height_max: 250, weight_min: 1, weight_max: 300 }];
+    const r = await readChartStatus(makeAdmin({ chartValue: saved }));
+    expect(r.customized).toBe(true);
+    expect(r.chart).toEqual(saved);
+  });
+
+  it('falls back to the default chart (not customized) when the metafield is empty', async () => {
+    const r = await readChartStatus(makeAdmin({ chartValue: null }));
+    expect(r.customized).toBe(false);
+    expect(r.chart).toBe(DEFAULT_CHART);
   });
 });
