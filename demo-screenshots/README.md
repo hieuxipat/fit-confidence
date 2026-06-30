@@ -14,6 +14,9 @@
 | `06-theme-editor-add-block.png` | **LIVE**: theme editor → Add block → app "Size Finder / Fit Confidence" | Mục 4, demo storefront | **L7** |
 | `07-admin-home-live.png` | **LIVE**: admin Home dashboard (Get started 3 bước + How it works + What's next) | **Mục 4 / Mục 7** ⭐ | **L5** |
 | `08-admin-sizechart-live.png` | **LIVE**: admin Size chart editor thật (S/M/L/XL ranges) | **Mục 4 (admin↔storefront)** ⭐ | **L5, L6** |
+| `11-storefront-live.png` | **LIVE**: storefront PDP thật + nút "Find my size" (không phải prototype) | **Mục 4** ⭐ | **L3, L7** |
+
+> 💡 `11` mới chụp nút (trước khi click). Nếu kịp, chụp thêm **kết quả modal LIVE** (bấm Find my size → nhập số đo → gợi ý) làm `11b-storefront-result.png` cho trọn cặp với prototype `05`.
 
 > Ảnh 01–05 chụp tự động từ HTML (playwright-cli over `http://127.0.0.1:8765`, vì `file://` bị chặn). Ảnh 06–08 là live trên dev store `hieu-test-app-1`.
 
@@ -25,7 +28,7 @@
 | `10-research-kiwi.png` | Ảnh deep-dive Kiwi competitor (đã có — ảnh research #25) | Mục 1 | L1, L2 |
 | `11-initsh-pass.png` | Chụp terminal `./init.sh` → `RESULT: PASS` + `npm test 21/21` | **Mục 4** ⭐ | L3, L7 |
 | `12-git-log.png` | Chụp `git log --oneline -20` | Mục 2 | L7 |
-| `13-storefront-live.png` | Chụp **storefront "Find my size"** thật trên store (đã add block) → bấm ra kết quả | Mục 4 | L3, L7 |
 | `14-codegraph.png` | Chụp terminal `codegraph init` + `codegraph_explore` (blast-radius) | Mục 7, Mục 5 | L6 |
+| `11b-storefront-result.png` | (tùy chọn) kết quả modal "Find my size" LIVE | Mục 4 | L3 |
 
 > Lý do chưa tự chụp: terminal không phải web page; live storefront cần `shopify app dev` + thao tác; 2 ảnh research là output tool ngoài repo.
