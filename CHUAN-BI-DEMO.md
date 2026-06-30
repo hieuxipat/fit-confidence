@@ -118,6 +118,7 @@ Flow nhỏ nhất demo được end-to-end: *"Buyer: find size"* bám các hub f
 | **6. Theme app block + UI** | `size-finder.liquid` + CSS bám prototype; đọc metafield + fallback | L7, L1 |
 | **7. Wire init.sh + state** | init.sh: Node check → `npm test` + `shopify app build` + harness; `feature_list.json` DoD/evidence | L3, L7 |
 | **8. `validateChart()` TDD** | Phase 2 lõi thuần, +5 test (tổng 16) | **L3** ⭐ |
+| **8b. Hiểu code trước khi extend (codegraph)** | Trước khi build admin: index codebase rồi `codegraph_explore`/`codegraph_impact` để thấy widget↔`recommendSize`↔chart nối nhau + blast-radius — query graph thay vì scan file. App nhỏ nên **dùng chọn lọc** (judgment, xem Slide 5). Demo live qua MCP. | **L2 + L6** |
 | **9. Admin Polaris + metafield** | trang `app.size-chart.jsx` (Polaris web components) + app-owned metafield `$app:fit_confidence` + `ensureSizeChartDefinition`; theme đọc lại | L5, L6 ⭐ |
 | **10. Debug khi kẹt** | ca thật: `write_metafields` invalid → app-owned namespace; đọc lỗi → tra docs → root cause → fix | **L3** ⭐ |
 
@@ -149,6 +150,7 @@ Flow nhỏ nhất demo được end-to-end: *"Buyer: find size"* bám các hub f
 - Feature map 31 feature rating "Complex" → **cắt scope** về 4 hub.
 - Lo agent chạy lệnh nguy hiểm / lộ secret → **dựng hooks + pre-commit guard** (chặn `rm -rf`, secret).
 - Skill `design-prototype` khóa vào **Polaris/Admin** → KHÔNG hợp **storefront widget** → nhận ra & **tự author prototype storefront** thay vì ép sai tool.
+- **codegraph — biết khi nào KHÔNG dùng tool nặng** (judgment): codegraph build knowledge graph để Claude query thay vì scan file → tiết kiệm token trên **codebase lớn**. Áp dụng đúng chỗ = "hiểu code trước khi extend" + "impact trước refactor". Nhưng app này chỉ ~chục file → **đọc thẳng còn rẻ hơn** → mình dùng **có chọn lọc** (demo 1 call cho thấy giá trị, không ép dùng tràn). Biết khi nào KHÔNG reach for tool nặng cũng là kỹ năng buổi 2. 🏷️ *Structured workflows, context engineering, tránh "làm app rồi nghĩ xem áp dụng gì".*
 - **Phase 2 — metafield ownership/scope** (ca debug đắt giá nhất): thêm `scopes = write_metafields` → `shopify app dev` báo *"These scopes are invalid"* (Shopify đã bỏ scope đó). Tra docs → hiểu **merchant-owned namespace cần scope, app-owned (`$app`) thì không** → đổi sang reserved namespace `$app:fit_confidence`, theme đọc `shop.metafields["$app:fit_confidence"]…`. Dùng **MCP skills** `shopify-admin`/`shopify-custom-data` validate GraphQL vs schema trước khi chạy.
 - **3 bug thật bắt được khi demo live** (kể như minh chứng "đọc lỗi → root cause → fix → regression test", KHÔNG đoán mò):
   1. **Save báo Application Error** → đọc stack trace → query lấy shop id viết 1 dòng `#graphql query…`; `#` comment hết dòng nên query rỗng → Shopify "syntax error, unexpected end of file". Tách xuống dòng + **thêm regression test** strip comment. (`fe16040`)
@@ -168,11 +170,12 @@ Flow nhỏ nhất demo được end-to-end: *"Buyer: find size"* bám các hub f
 | 2 | **Delegation + Skill (B2)** | Web research competitor; chạy `/map-feature` | `outputs/kiwi-sizing-feature-map.html` (`c655976`) | ✅ |
 | 3 | **Planning (B2)** | Đọc dependency hub → cắt scope MVP; **spec + plan** cho cả storefront & admin (`docs/features/size-finder/`) | Feature map + `plans/*.md` + `specs/*.md` | ✅ |
 | 4 | **CLAUDE.md/AGENTS.md (B5,B7)** | Luật dự án + bản đồ repo + iron law/guardrail rules | `CLAUDE.md`, `AGENTS.md` (`01ffd55`,`6848d99`) | ✅ |
-| 5 | **TDD/Testing (B3)** | RED→GREEN cho `recommendSize()` (11) **và** `validateChart()` (5) | Test file + commit RED/GREEN; `npm test` **16/16** | ✅ |
-| 6 | **Verification (B3,B7)** | `init.sh` chạy verify thật (test + build + harness check) | `./init.sh` → `RESULT: PASS`, npm test 16/16, build OK | ✅ |
+| 5 | **TDD/Testing (B3)** | RED→GREEN cho `recommendSize()` (11) **và** `validateChart()` (5) + regression GraphQL (1) | Test file + commit RED/GREEN; `npm test` **17/17** | ✅ |
+| 6 | **Verification (B3,B7)** | `init.sh` chạy verify thật (test + build + harness check) | `./init.sh` → `RESULT: PASS`, npm test 17/17, build OK | ✅ |
 | 7 | **Hooks/Guardrails (B4)** | Hook chặn lệnh nguy hiểm + permissions + pre-commit secret (đã thực sự chặn 2 commit false-positive → xác minh rồi mới `--no-verify`) + chống injection | `.claude/settings.json`, `.claude/hooks/*`, `.githooks/pre-commit` (`6848d99`) | ✅ |
 | 8 | **Harness workflow (B7)** | `feature_list.json` (schema phân cấp) + `claude-progress.md` + clean restart | Bộ harness files + `git log` | ✅ |
 | 9 | **MCP + Custom Data (B6)** | Dùng MCP skills `shopify-admin`/`shopify-custom-data`/`shopify-polaris-app-home` validate GraphQL & UI vs schema; lưu chart qua **app-owned metafield** (không DB) | `app/app/size-chart.server.js`, route admin (`9193bb8`,`2b4ec4e`) | ✅ |
+| 10 | **codegraph — context tool / MCP (B2,B6)** | Index codebase → query graph (`codegraph_explore`/`impact`) thay vì scan file, dùng ở ranh giới Phase 2; app nhỏ nên dùng **chọn lọc** (judgment) | Demo live qua MCP `mcp__codegraph__*` (output đính kèm sau khi `codegraph init`) | 🟡 demo live |
 
 > 💡 **Cả 9/9 mục đều có evidence thật trong repo** (kể cả TDD 16 test và ca debug metafield). Chỉ còn quay clip demo + slide.
 >
