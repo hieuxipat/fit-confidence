@@ -37,7 +37,6 @@
 | Commit | Việc đã làm | Kiến thức khóa học | Evidence để show |
 |---|---|---|---|
 | `01ffd55` | Bootstrap harness scaffold: `AGENTS.md`, `CLAUDE.md`, `feature_list.json`, `init.sh`, `claude-progress.md`, `session-handoff.md` | **B5 CLAUDE.md/AGENTS.md · B7 Harness workflow** | Bộ file harness ở repo root |
-| `45c8071` | Upstream sync scanner (`scripts/scan-source.mjs`) + baseline snapshot | **B7 Harness nâng cao** (giữ harness đồng bộ với nguồn) | `SYNC.md`, `.harness-baseline/` |
 | `633679d` | `docs/shopify-conventions.md`; ignore `docs/lessions/` | **B1 Context Engineering** (đóng gói domain knowledge cho agent) | File conventions |
 | `88e03b5` | Cài 4 Skill: `design-brainstorm`, `design-prototype`, `map-feature`, `playwright-cli` | **B2 Skills / Structured Workflows** | `.claude/skills/` |
 | `c655976` | Feature map đối thủ Kiwi Sizing (output của `/map-feature`) — 31 feature, 5 layer | **B2 Delegation + Skill + Planning** (đọc dependency để cắt scope) | `outputs/kiwi-sizing-feature-map.html` |
