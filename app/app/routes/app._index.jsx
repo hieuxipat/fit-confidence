@@ -3,10 +3,21 @@ import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
 import { readChartStatus } from "../size-chart.server.js";
 
+// Stable theme app extension UID (app/extensions/size-finder/shopify.extension.toml).
+// Per-extension, not per-store — safe to reference for the theme-editor deep link.
+const EXTENSION_UID = "4db8a036-0b67-7cb1-32c0-dbe5512377586a3022e4";
+
 export const loader = async ({ request }) => {
   const { admin, session } = await authenticate.admin(request);
 
   const { customized } = await readChartStatus(admin);
+
+  // Deep link that opens the current theme's editor on the product template with
+  // the Size Finder app block ready to add. Built from the shop domain + the
+  // stable extension UID — no hardcoded store/theme id, works on any store.
+  const editorUrl =
+    `https://${session.shop}/admin/themes/current/editor` +
+    `?template=product&addAppBlockId=${EXTENSION_UID}/size-finder&target=mainSection`;
 
   // Link the "Try it" step to a real product page when we can read one.
   // Reading a product needs read_products; if it's missing or the store has no
@@ -23,11 +34,11 @@ export const loader = async ({ request }) => {
     // read_products not granted yet — keep the fallback URL.
   }
 
-  return { customized, testUrl };
+  return { customized, testUrl, editorUrl };
 };
 
 export default function Index() {
-  const { customized, testUrl } = useLoaderData();
+  const { customized, testUrl, editorUrl } = useLoaderData();
   const navigate = useNavigate();
   const goEdit = () => navigate("/app/size-chart");
 
@@ -64,9 +75,15 @@ export default function Index() {
           <s-stack direction="block" gap="small-200">
             <s-text type="strong">2. Add the Size Finder widget</s-text>
             <s-paragraph>
-              In your theme editor, open a product page and add the “Size
-              Finder” app block (Online Store → Customize → Add block).
+              Open your theme editor on a product page and add the “Size Finder”
+              app block. The button below opens the editor with the block ready
+              to place.
             </s-paragraph>
+            <s-stack direction="inline" gap="base">
+              <s-button href={editorUrl} target="_blank" variant="secondary">
+                Open theme editor
+              </s-button>
+            </s-stack>
           </s-stack>
 
           <s-stack direction="block" gap="small-200">
