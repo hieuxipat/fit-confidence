@@ -6,9 +6,10 @@ show how the course methodology (planning, harness, guardrails, TDD,
 verification, MCP, delegation) is applied across a product's whole lifecycle —
 not just "AI wrote some code".
 
-> 📊 The full short presentation (objective · knowledge applied · AI's role ·
-> results · challenges · lessons) is in **[`BAI-TRINH-BAY.md`](./BAI-TRINH-BAY.md)**.
-> The detailed demo prep is in **[`CHUAN-BI-DEMO.md`](./CHUAN-BI-DEMO.md)**.
+> 📊 The written report (objective · knowledge applied · AI's role · results ·
+> challenges · lessons) is in **[`demo/report.md`](./demo/report.md)**, the
+> projectable slide deck in **[`demo/slides.html`](./demo/slides.html)**, and the
+> detailed prep notes in **[`demo/prep.md`](./demo/prep.md)**.
 
 ## What it does
 

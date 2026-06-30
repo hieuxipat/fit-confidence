@@ -155,7 +155,7 @@ Raw output of `./init.sh` is the demo's verification evidence. `feature_list.jso
 gains a `feat-app` feature with tasks (scaffold, recommender-TDD, block/widget,
 verify), each moved to `passing` only with recorded evidence.
 
-## 8. Demo script (maps to CHUAN-BI-DEMO.md)
+## 8. Demo script (maps to demo/prep.md)
 
 `shopify app dev` → open the dev-store theme editor → add the **Size Finder** app
 block to the product page → on the storefront tap "Find my size" → enter
