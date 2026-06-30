@@ -45,6 +45,13 @@ export async function ensureSizeChartDefinition(admin) {
 
 // readChart(admin) -> chart[] : the saved chart, or DEFAULT_CHART when absent/invalid.
 export async function readChart(admin) {
+  return (await readChartStatus(admin)).chart;
+}
+
+// readChartStatus(admin) -> { chart, customized } : like readChart, but also
+// reports whether the merchant has saved a custom chart (vs. falling back to
+// DEFAULT_CHART). Used by the Home dashboard to show setup progress.
+export async function readChartStatus(admin) {
   const res = await admin.graphql(
     `#graphql
     query SizeChart($ns: String!, $key: String!) {
@@ -56,7 +63,8 @@ export async function readChart(admin) {
   );
   const body = await res.json();
   const value = body?.data?.shop?.chart?.jsonValue;
-  return Array.isArray(value) && value.length ? value : DEFAULT_CHART;
+  const customized = Array.isArray(value) && value.length > 0;
+  return { chart: customized ? value : DEFAULT_CHART, customized };
 }
 
 // writeChart(admin, chart) -> void : persist the chart JSON to the shop metafield.

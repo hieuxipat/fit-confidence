@@ -13,10 +13,10 @@ api_version = "2026-07"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-# No scopes needed: the app manages only the metafield + definition it OWNS
-# (fit_confidence.size_chart on SHOP). Shopify removed the standalone
-# read_metafields/write_metafields scopes; app-owned metafields need no scope.
-scopes = ""
+# The size chart lives in an APP-OWNED metafield ($app:fit_confidence) which
+# needs no scope. read_products is only used to link the Home "Try it" step to a
+# real product page; the loader falls back gracefully if it is not granted.
+scopes = "read_products"
 
 [auth]
 redirect_urls = [ "https://shopify.dev/apps/default-app-home/api/auth" ]
