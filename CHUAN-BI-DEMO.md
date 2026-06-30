@@ -183,6 +183,26 @@ Flow nhỏ nhất demo được end-to-end: *"Buyer: find size"* bám các hub f
 
 ---
 
+## PHẦN E2 — RÀ SOÁT COVERAGE 7 LESSON + ĐÓNG GAP (điểm ăn điểm meta)
+
+> 🔍 Tôi **tự audit độ phủ kiến thức**: fan-out **7 subagent song song** (mỗi con đọc 1 lesson + đối chiếu repo tìm evidence) → tổng hợp ma trận. *Chính việc này = demo live của L2 (Delegation/parallel) + L5 (subagent).*
+
+**Kết quả audit:** Áp dụng **mạnh** ở L4 (đầy đủ), L7 (vượt), L1, L5-skills, L6-consume. Sau audit đã **đóng 3 gap nổi nhất**:
+
+| Gap (lesson) | Đã đóng bằng | Evidence |
+|---|---|---|
+| **Custom sub-agent** (L5) — chưa có `.claude/agents/` | Tạo agent **`code-reviewer`** (read-only: review diff, verify test, không cho làm yếu guardrails) | `.claude/agents/code-reviewer.md` + đã **dùng thật** 7 subagent để audit |
+| **Risk Matrix** (L3) — thiếu phân loại rủi ro | Section "Risk Classification" (low/med/high, auto-high cho auth/scope/secret/deploy/guardrails) + field `risk` cho **cả 7 task**, **máy enforce** trong `verify-harness.sh` | `AGENTS.md` · `feature_list.json` · `verify-harness.sh` (test âm: thiếu `risk` → check FAIL) |
+| **Session handoff** (L7) — file rỗng | Điền `session-handoff.md` đầy đủ (objective/verification/decisions/blockers/next-step) | `session-handoff.md` |
+
+**Gap còn lại (cố ý để next-step, nói rõ là judgment):**
+- **Build 1 MCP server** (L6) — hiện chỉ *consume* (codegraph, shopify-dev-mcp); lab của L6 cũng consume-only.
+- **User stories + Given-When-Then** (L2) — đã thay tương đương bằng TDD test + `feature_list` DoD (khác format, không thiếu chức năng).
+
+🏷️ *Slide: "Tôi không chỉ học — tôi tự kiểm chứng độ phủ bằng 7 subagent, rồi đóng gap có chọn lọc."*
+
+---
+
 ## PHẦN F — CHECKLIST SUBMIT (trước 14h T3 30/06)
 - [x] Repo đã push (`fit-confidence`) — commit history rõ ràng
 - [x] Guardrails/hooks/permissions + harness + feature map đã commit

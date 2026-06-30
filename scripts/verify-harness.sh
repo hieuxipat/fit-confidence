@@ -34,11 +34,12 @@ if jq -e '
       (.schema_version|type=="number")
    and (.features|type=="array")
    and (.features|all(.id and .title and (.tasks|type=="array")))
-   and (.features|all(.tasks|all(.id and .title and .status and (.dod|type=="array") and (.evidence|type=="array"))))
+   and (.features|all(.tasks|all(.id and .title and .status and (.risk|type=="string") and (.dod|type=="array") and (.evidence|type=="array"))))
+   and (.features|all(.tasks|all(.risk|IN("low","medium","high"))))
    ' feature_list.json >/dev/null 2>&1; then
-  ok "feature_list.json matches schema"
+  ok "feature_list.json matches schema (incl. per-task risk)"
 else
-  bad "feature_list.json does not match schema (need schema_version, features[].tasks[]{id,title,status,dod[],evidence[]})"
+  bad "feature_list.json does not match schema (need schema_version, features[].tasks[]{id,title,status,risk(low|medium|high),dod[],evidence[]})"
 fi
 
 # 4) Hooks executable.

@@ -83,6 +83,7 @@
   - **codegraph** applied at the Phase-2 "understand-before-extend" point: operator ran `codegraph init` (27 files / 168 nodes / 236 edges); I ran `codegraph_explore` + `codegraph_impact recommendSize` via MCP. The graph flagged `writeChart`/`readChartStatus` as having no covering tests.
   - **Closed that test gap** (tool→action loop): added 4 behavioural tests to `app/app/size-chart.server.test.js` — `writeChart` resolves on success / throws on metafieldsSet userErrors; `readChartStatus` reports `customized` + returns saved chart vs DEFAULT fallback.
   - Documented codegraph placement + judgment ("selective use on a small codebase") in CHUAN-BI-DEMO.md; gitignored `.codegraph/`.
+  - **Lesson-coverage audit** via 7 parallel subagents (one per lesson) → matrix. Closed the 3 top gaps: (1) **custom sub-agent** `.claude/agents/code-reviewer.md` (L5); (2) **Risk Matrix** — AGENTS.md "Risk Classification" + `risk` field on all 7 tasks, machine-enforced in `verify-harness.sh` (L3); (3) filled **`session-handoff.md`** (L7). Remaining gaps left as next-step: build an MCP server (L6, consume-only for now), user-stories/Given-When-Then (L2, substituted by TDD + DoD). Recorded in CHUAN-BI-DEMO.md "Phần E2".
 - Verification run: `./init.sh` → RESULT: PASS — `npm test` **21/21**, `shopify app build` OK, harness healthy.
 - Evidence captured: CHUAN-BI-DEMO.md evidence row #10 (codegraph) + flow step 8b; size-chart.server.test.js.
 - Commits: Home dashboard + theme-editor deep link + codegraph evidence + behavioural tests (see git log).

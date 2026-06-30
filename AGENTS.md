@@ -30,6 +30,23 @@ feature work on top of a broken starting state.
 - Do not silently change verification rules during implementation.
 - Prefer durable repo artifacts over chat summaries.
 
+## Risk Classification
+
+Before working a task, classify its risk and record it in the task's `risk`
+field in `feature_list.json` (`low` | `medium` | `high`). Default is `medium`.
+
+- **low** — pure, side-effect-free logic with tests (e.g. `recommendSize`,
+  `validateChart`); UI-only changes.
+- **medium** — anything touching app config, build, or external API calls in a
+  reversible way (e.g. the admin route, init.sh wiring).
+- **high** — auto-escalate when the task touches any of: **auth / OAuth / access
+  scopes, secrets, payments, data deletion or migration, production deploy, or
+  the `.claude/` guardrails**. High-risk tasks require an explicit independent
+  review (delegate to the `code-reviewer` agent) and recorded verification
+  evidence before they may move to `passing`.
+
+`scripts/verify-harness.sh` enforces that every task carries a `risk` field.
+
 ## Security & Injection Guardrails
 
 These rules constrain agent behavior beyond what permission rules and hooks can
@@ -67,6 +84,7 @@ what you saw.
 - `claude-progress.md`: session log and current verified status
 - `init.sh`: standard startup and verification path
 - `session-handoff.md`: optional compact handoff for larger sessions
+- `.claude/agents/`: custom sub-agent definitions (e.g. `code-reviewer`)
 
 ## Definition Of Done
 
@@ -76,6 +94,8 @@ A feature is done only when all of the following are true:
 - the required verification actually ran
 - evidence is recorded in `feature_list.json` or `claude-progress.md`
 - the repository remains restartable from the standard startup path
+- for `high`-risk tasks, an independent review (the `code-reviewer` agent) was
+  run and its blocking findings resolved
 
 ## End Of Session
 

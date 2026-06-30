@@ -33,6 +33,7 @@
       "tasks": [
         {
           "id": "task-security-001",
+          "risk": "high",
           "title": "Permissions, dangerous-command hook, secret hooks, pre-commit guard",
           "requirements": [
             "Restrict tool permissions to an allow/ask/deny list and self-protect the config.",
@@ -64,6 +65,7 @@
       "tasks": [
         {
           "id": "task-flow-phase0",
+          "risk": "medium",
           "title": "Phase 0: real init.sh verification + hierarchical state schema",
           "requirements": [
             "init.sh runs a real, runnable verification (not placeholders).",
@@ -86,6 +88,7 @@
         },
         {
           "id": "task-flow-idea",
+          "risk": "medium",
           "title": "/idea command: research, analyze, ask clarifying questions, split into tasks",
           "requirements": ["Turn a user request into confirmed, grouped tasks written into state."],
           "status": "not_started",
@@ -99,6 +102,7 @@
         },
         {
           "id": "task-flow-loop",
+          "risk": "high",
           "title": "/spec /plan /work /review (loop <=3) /release commands + orchestrator",
           "requirements": ["Chain stages; review/release loop until pass or max 3 rounds then stop and report."],
           "status": "not_started",
@@ -119,6 +123,7 @@
       "tasks": [
         {
           "id": "task-app-recommender",
+          "risk": "low",
           "title": "recommendSize() core logic, fully TDD",
           "requirements": ["Exact match, fit adjustment, out-of-range estimate, input validation."],
           "status": "passing",
@@ -134,6 +139,7 @@
         },
         {
           "id": "task-app-block",
+          "risk": "low",
           "title": "Theme app block + widget UI",
           "requirements": ["App block renders button + modal; calls recommendSize; reads merchant chart (metafield) with fallback; matches prototype."],
           "status": "passing",
@@ -152,6 +158,7 @@
         },
         {
           "id": "task-app-admin",
+          "risk": "medium",
           "title": "Admin Polaris size-chart editor (metafield)",
           "requirements": ["Merchant edits chart in admin; stored in shop metafield; storefront widget uses it."],
           "status": "passing",
