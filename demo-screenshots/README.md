@@ -22,12 +22,13 @@
 
 > Ảnh 01–05 chụp tự động từ HTML (playwright-cli over `http://127.0.0.1:8765`, vì `file://` bị chặn). Ảnh 06–08 là live trên dev store `hieu-test-app-1`.
 
+| `09-research-5apps.png` | **Research**: dashboard "5 app cơ hội" (Size Finder Impact Rất cao/Complexity Thấp) | **Mục 1** ⭐ | **L1** |
+| `10-research-kiwi.png` | **Research**: deep-dive Kiwi competitor (184+ app, 42,977 installs, −4% YoY, bảng so sánh) | **Mục 1** ⭐ | **L1, L2** |
+
 ## Còn nên thêm (tùy chọn — để slide trọn bộ)
 
 | Ảnh nên thêm | Cách lấy | Dùng cho | Lesson |
 |---|---|---|---|
-| `09-research-5apps.png` | Ảnh dashboard "5 app cơ hội" (đã có — ảnh research #24) | Mục 1 | L1 |
-| `10-research-kiwi.png` | Ảnh deep-dive Kiwi competitor (đã có — ảnh research #25) | Mục 1 | L1, L2 |
 | `11-initsh-pass.png` | Chụp terminal `./init.sh` → `RESULT: PASS` + `npm test 21/21` | **Mục 4** ⭐ | L3, L7 |
 | `12-git-log.png` | Chụp `git log --oneline -20` | Mục 2 | L7 |
 | `14-codegraph.png` | Chụp terminal `codegraph init` + `codegraph_explore` (blast-radius) | Mục 7, Mục 5 | L6 |
