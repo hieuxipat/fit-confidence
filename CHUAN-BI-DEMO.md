@@ -118,7 +118,7 @@ Flow nhỏ nhất demo được end-to-end: *"Buyer: find size"* bám các hub f
 | **6. Theme app block + UI** | `size-finder.liquid` + CSS bám prototype; đọc metafield + fallback | L7, L1 |
 | **7. Wire init.sh + state** | init.sh: Node check → `npm test` + `shopify app build` + harness; `feature_list.json` DoD/evidence | L3, L7 |
 | **8. `validateChart()` TDD** | Phase 2 lõi thuần, +5 test (tổng 16) | **L3** ⭐ |
-| **8b. Hiểu code trước khi extend (codegraph)** | Trước khi build admin: index codebase rồi `codegraph_explore`/`codegraph_impact` để thấy widget↔`recommendSize`↔chart nối nhau + blast-radius — query graph thay vì scan file. App nhỏ nên **dùng chọn lọc** (judgment, xem Slide 5). Demo live qua MCP. | **L2 + L6** |
+| **8b. Hiểu code trước khi extend (codegraph)** | `codegraph init` (27 files/168 nodes/236 edges) → `codegraph_explore` thấy widget↔`recommendSize`↔chart trong 1 call + **blast-radius** (`writeChart` 1 caller, ⚠️ no covering tests); `codegraph_impact recommendSize` → 3 symbols. Query graph thay vì scan file. App nhỏ nên **dùng chọn lọc** (judgment, xem Slide 5). | **L2 + L6** |
 | **9. Admin Polaris + metafield** | trang `app.size-chart.jsx` (Polaris web components) + app-owned metafield `$app:fit_confidence` + `ensureSizeChartDefinition`; theme đọc lại | L5, L6 ⭐ |
 | **10. Debug khi kẹt** | ca thật: `write_metafields` invalid → app-owned namespace; đọc lỗi → tra docs → root cause → fix | **L3** ⭐ |
 
@@ -175,7 +175,7 @@ Flow nhỏ nhất demo được end-to-end: *"Buyer: find size"* bám các hub f
 | 7 | **Hooks/Guardrails (B4)** | Hook chặn lệnh nguy hiểm + permissions + pre-commit secret (đã thực sự chặn 2 commit false-positive → xác minh rồi mới `--no-verify`) + chống injection | `.claude/settings.json`, `.claude/hooks/*`, `.githooks/pre-commit` (`6848d99`) | ✅ |
 | 8 | **Harness workflow (B7)** | `feature_list.json` (schema phân cấp) + `claude-progress.md` + clean restart | Bộ harness files + `git log` | ✅ |
 | 9 | **MCP + Custom Data (B6)** | Dùng MCP skills `shopify-admin`/`shopify-custom-data`/`shopify-polaris-app-home` validate GraphQL & UI vs schema; lưu chart qua **app-owned metafield** (không DB) | `app/app/size-chart.server.js`, route admin (`9193bb8`,`2b4ec4e`) | ✅ |
-| 10 | **codegraph — context tool / MCP (B2,B6)** | Index codebase → query graph (`codegraph_explore`/`impact`) thay vì scan file, dùng ở ranh giới Phase 2; app nhỏ nên dùng **chọn lọc** (judgment) | Demo live qua MCP `mcp__codegraph__*` (output đính kèm sau khi `codegraph init`) | 🟡 demo live |
+| 10 | **codegraph — context tool / MCP (B2,B6)** | `codegraph init` (27 files · 168 nodes · 236 edges · 214ms) → `codegraph_explore` (26 symbols/12 files, **blast-radius**) + `codegraph_impact recommendSize`. Query graph thay vì scan file; dùng **chọn lọc** trên app nhỏ (judgment). Bonus: graph **tự flag `writeChart`/`readChartStatus` = "no covering tests"** — lỗ hổng test thật. | Output MCP `mcp__codegraph__*` (chụp terminal `init` + kết quả explore/impact) | ✅ |
 
 > 💡 **Cả 9/9 mục đều có evidence thật trong repo** (kể cả TDD 16 test và ca debug metafield). Chỉ còn quay clip demo + slide.
 >
