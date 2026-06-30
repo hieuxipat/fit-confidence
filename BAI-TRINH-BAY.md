@@ -62,7 +62,7 @@ AI (Claude Code) hỗ trợ: **research** thị trường/đối thủ, **brains
 
 - **Chạy thật, demo được end-to-end** trên dev store `hieu-test-app-1`: sửa chart trong admin → Save (toast) → widget storefront đổi gợi ý.
 - **Số liệu thật:** `npm test` **21/21** xanh · `shopify app build` OK · `react-router build` compile route admin · `./init.sh` → **RESULT: PASS**.
-- **Đã deploy:** version **`fit-confidence-2`** (storefront widget chạy trên CDN Shopify, không cần server).
+- **Đã deploy:** version **`fit-confidence-3`** (storefront widget chạy trên CDN Shopify, không cần server).
 - App **gọn 3 màn**: Home (dashboard hướng dẫn), Size chart (editor), storefront widget.
 - Lưu chart qua **app-owned metafield `$app:fit_confidence`** — không database.
 

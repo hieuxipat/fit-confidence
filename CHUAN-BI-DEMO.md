@@ -2,7 +2,7 @@
 
 **Deadline:** 14h Thứ Ba 30/06 (submit Form)
 **Repo:** https://github.com/hieuxipat/fit-confidence
-**Trạng thái hiện tại:** ✅ Harness + guardrails + feature map + prototype + **Phase 1 (recommendSize TDD + theme app block)** + **Phase 2 admin (embedded React Router app + trang Polaris sửa size chart + app-owned metafield)** — **đã DEMO LIVE end-to-end** trên `hieu-test-app-1` (admin Save ↔ storefront widget) + **DEPLOYED** version `fit-confidence-2`. Trong lúc demo đã **fix 3 bug thật** (chi tiết ở Phần D5). · ⬜ Còn lại: quay clip demo + slide + submit.
+**Trạng thái hiện tại:** ✅ Harness + guardrails + feature map + prototype + **Phase 1 (recommendSize TDD + theme app block)** + **Phase 2 admin (embedded React Router app + trang Polaris sửa size chart + app-owned metafield)** — **đã DEMO LIVE end-to-end** trên `hieu-test-app-1` (admin Save ↔ storefront widget) + **DEPLOYED** version `fit-confidence-3`. Trong lúc demo đã **fix 3 bug thật** (chi tiết ở Phần D5). · ⬜ Còn lại: quay clip demo + slide + submit.
 
 > **Tư duy của tài liệu này:** không "làm app rồi nghĩ xem áp dụng gì". Đi ngược lại — mỗi phần trình bày đã map sẵn với một việc THẬT + một mảng kiến thức khóa học. Phần lớn evidence cho phần "phương pháp/harness" **đã nằm trong git history rồi**; việc còn lại là build phần app để có evidence cho TDD + Verification + demo chạy được.
 
@@ -129,7 +129,7 @@ Flow nhỏ nhất demo được end-to-end: *"Buyer: find size"* bám các hub f
 | **A. Quay clip demo** | Save chart trong admin → toast → storefront widget đổi gợi ý (admin↔storefront); + 1 case validation banner | L3 (Verification) |
 | **B. Slide 6 phần + submit** (sáng T3 30/06) | Video 2–3', slide, submit Form | L7 |
 
-> ✅ Đã verify live end-to-end trên `hieu-test-app-1` (admin Save ↔ storefront widget) → `task-app-admin` = **passing**, deployed `fit-confidence-2`. **Chỉ còn quay lại thành clip + dựng slide.**
+> ✅ Đã verify live end-to-end trên `hieu-test-app-1` (admin Save ↔ storefront widget) → `task-app-admin` = **passing**, deployed `fit-confidence-3`. **Chỉ còn quay lại thành clip + dựng slide.**
 
 ---
 
@@ -146,7 +146,7 @@ Flow nhỏ nhất demo được end-to-end: *"Buyer: find size"* bám các hub f
 
 **3️⃣ AI hỗ trợ phần nào** — AI giúp: research, brainstorm plan, generate widget, viết test, debug; **tôi giữ vai PM + reviewer** (quyết hướng, review code, dựng guardrails để AI không phá). *Show:* 1 ReAct loop (đọc file → sửa → chạy test) + hook chặn `rm -rf` live. 🏷️ *Harness tool-use loop, đổi vai coder → PM.*
 
-**4️⃣ Kết quả đạt được** — *Show demo live/video* (đã verify thật trên `hieu-test-app-1`): (a) storefront 170cm/65kg → "M" + lý do; (b) **admin↔storefront**: sửa chart trong trang Polaris **Size chart** → Save (toast) → widget storefront gợi ý size khác. *Số liệu thật:* **21/21 test xanh** (recommendSize 11 + validateChart 5 + server behaviour 4 + GraphQL regression 1), `shopify app build` OK (theme check sạch), `react-router build` compile route admin, `./init.sh` → **RESULT: PASS**, **DEPLOYED** version `fit-confidence-2` (storefront widget chạy trên CDN Shopify, không cần server). 🏷️ *Verification (evidence = raw output), TDD, Shopify app thật (storefront + admin), Custom Data (metafield không DB), Systematic Debugging (3 bug live).*
+**4️⃣ Kết quả đạt được** — *Show demo live/video* (đã verify thật trên `hieu-test-app-1`): (a) storefront 170cm/65kg → "M" + lý do; (b) **admin↔storefront**: sửa chart trong trang Polaris **Size chart** → Save (toast) → widget storefront gợi ý size khác. *Số liệu thật:* **21/21 test xanh** (recommendSize 11 + validateChart 5 + server behaviour 4 + GraphQL regression 1), `shopify app build` OK (theme check sạch), `react-router build` compile route admin, `./init.sh` → **RESULT: PASS**, **DEPLOYED** version `fit-confidence-3` (storefront widget chạy trên CDN Shopify, không cần server). 🏷️ *Verification (evidence = raw output), TDD, Shopify app thật (storefront + admin), Custom Data (metafield không DB), Systematic Debugging (3 bug live).*
 
 **5️⃣ Khó khăn & cách xử lý** (chọn 2–3):
 - AI **bịa công thức sizing** → verify bằng size chart thật + test khóa.
@@ -212,7 +212,7 @@ Flow nhỏ nhất demo được end-to-end: *"Buyer: find size"* bám các hub f
 - [x] Phase 0 (init.sh verify + schema) đã commit
 - [x] Phase 1: `recommendSize()` test RED→GREEN + theme app block + RELEASED (`fit-confidence-1`)
 - [x] Phase 2: embedded React Router app + trang Polaris sửa chart + `validateChart` TDD + app-owned metafield
-- [x] Demo LIVE end-to-end trên `hieu-test-app-1` + **deployed `fit-confidence-2`** + fix 3 bug live
+- [x] Demo LIVE end-to-end trên `hieu-test-app-1` + **deployed `fit-confidence-3`** + fix 3 bug live
 - [x] `./init.sh` ra raw output (test 21/21 + build + harness PASS) — evidence
 - [ ] **Quay clip demo admin↔storefront** (Save chart → widget đổi) + 1 case validation
 - [ ] Slide 6 phần

@@ -24,14 +24,15 @@
 
 | `09-research-5apps.png` | **Research**: dashboard "5 app cơ hội" (Size Finder Impact Rất cao/Complexity Thấp) | **Mục 1** ⭐ | **L1** |
 | `10-research-kiwi.png` | **Research**: deep-dive Kiwi competitor (184+ app, 42,977 installs, −4% YoY, bảng so sánh) | **Mục 1** ⭐ | **L1, L2** |
+| `12-dev-dashboard-v3.png` | **LIVE**: dev dashboard — version `fit-confidence-3` **Active** (scopes read_products, extension UID khớp deep-link) | Mục 4 / Mục 7 | L7 |
 
-## Còn nên thêm (tùy chọn — để slide trọn bộ)
+## Còn thiếu (4 ảnh terminal — tôi tự render được)
 
-| Ảnh nên thêm | Cách lấy | Dùng cho | Lesson |
+| Ảnh | Nội dung thật | Dùng cho | Lesson |
 |---|---|---|---|
-| `11-initsh-pass.png` | Chụp terminal `./init.sh` → `RESULT: PASS` + `npm test 21/21` | **Mục 4** ⭐ | L3, L7 |
-| `12-git-log.png` | Chụp `git log --oneline -20` | Mục 2 | L7 |
-| `14-codegraph.png` | Chụp terminal `codegraph init` + `codegraph_explore` (blast-radius) | Mục 7, Mục 5 | L6 |
-| `11b-storefront-result.png` | (tùy chọn) kết quả modal "Find my size" LIVE | Mục 4 | L3 |
+| `15-initsh-pass.png` | `./init.sh` → `RESULT: PASS` + `npm test 21/21` | **Mục 4** ⭐ | L3, L7 |
+| `16-npm-test.png` | `npm test` → 21 passed | Mục 4 | L3 |
+| `17-git-log.png` | `git log --oneline` (commit history) | Mục 2 | L7 |
+| `18-codegraph.png` | `codegraph_explore` blast-radius | Mục 7, Mục 5 | L6 |
 
-> Lý do chưa tự chụp: terminal không phải web page; live storefront cần `shopify app dev` + thao tác; 2 ảnh research là output tool ngoài repo.
+> Đây là output terminal (không phải web page) — sẽ render thành ảnh "terminal card" bằng playwright khi cần.
