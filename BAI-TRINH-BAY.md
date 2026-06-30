@@ -74,6 +74,135 @@ AI (Claude Code) hỗ trợ: **research** thị trường/đối thủ, **brains
 
 ---
 
+## 7. Luồng build từ đầu → cuối (mỗi bước gắn Lesson)
+
+> Câu chốt: *"Áp dụng kiến thức **theo đúng thứ tự vòng đời** — L1/L2 tìm cơ hội & scope, L4/L7 dựng nền an toàn TRƯỚC khi code, L3 xuyên suốt phần code, L5/L6 cho tooling & mở rộng — chứ không 'làm app xong mới gắn nhãn kiến thức'."*
+
+### Sơ đồ (ASCII)
+
+```
+╔═══════════════════════════════════════════════════════════════════╗
+║ PHASE 0 · TÌM CƠ HỘI & CẮT SCOPE                                   ║
+╠═══════════════════════════════════════════════════════════════════╣
+║  ① Research thị trường + tear-down đối thủ Kiwi      ──────► L1     ║
+║       (prompt/context engineering, loại trừ nhiễu)                  ║
+║              │                                                      ║
+║  ② /map-feature → dependency map 31 feature                        ║
+║       → CẮT SCOPE còn 4 hub (đọc độ phức tạp)        ──────► L2     ║
+╚═══════════════════════════════╤═══════════════════════════════════╝
+                                ▼
+╔═══════════════════════════════════════════════════════════════════╗
+║ PHASE 1 · DỰNG HARNESS + GUARDRAILS  (nền an toàn TRƯỚC khi code)  ║
+╠═══════════════════════════════════════════════════════════════════╣
+║  ③ AGENTS.md / CLAUDE.md / feature_list.json /                     ║
+║       init.sh / claude-progress.md                  ──────► L7,L5  ║
+║  ④ hooks chặn lệnh nguy hiểm + permissions +                       ║
+║       pre-commit chặn secret + chống injection      ──────► L4     ║
+║  ⑤ init.sh chạy verify-harness                                     ║
+║       (artifact + JSON schema + hook self-test)     ──────► L3,L7  ║
+╚═══════════════════════════════╤═══════════════════════════════════╝
+                                ▼
+╔═══════════════════════════════════════════════════════════════════╗
+║ PHASE 2 · DESIGN  (artifact bền, không chat)                      ║
+╠═══════════════════════════════════════════════════════════════════╣
+║  ⑥ brainstorm → spec → plan (+ prototype UI)        ──────► L2,L5  ║
+╚═══════════════════════════════╤═══════════════════════════════════╝
+                                ▼
+╔═══════════════════════════════════════════════════════════════════╗
+║ PHASE 3 · BUILD STOREFRONT  (Size Finder widget)                  ║
+╠═══════════════════════════════════════════════════════════════════╣
+║  ⑦ recommendSize()  RED → GREEN → REFACTOR          ──────► L3 ⭐  ║
+║       (TDD: exact / validation / out-of-range / fit)               ║
+║  ⑧ theme app block + modal UI (ReAct loop)          ──────► L7,L1 ║
+║  ⑨ shopify app build OK → deploy fit-confidence-1   ──────► L7     ║
+╚═══════════════════════════════╤═══════════════════════════════════╝
+                                ▼
+╔═══════════════════════════════════════════════════════════════════╗
+║ PHASE 4 · BUILD ADMIN  (embedded app + metafield)                 ║
+╠═══════════════════════════════════════════════════════════════════╣
+║  ⑩ codegraph: index → explore (HIỂU trước khi extend)──────► L2,L6 ║
+║  ⑪ shopify app init → embedded React Router app                    ║
+║       → gộp về app/ (1 app = storefront + admin)    ──────► L7     ║
+║  ⑫ validateChart()  RED → GREEN                     ──────► L3 ⭐  ║
+║  ⑬ trang Polaris + app-owned metafield $app:                       ║
+║       GraphQL/Polaris validate qua MCP skills       ──────► L6,L5  ║
+║  ⑭ DEBUG: scope invalid + 3 bug live                               ║
+║       (reproduce → root cause → fix → regression)   ──────► L3 ⭐  ║
+║  ⑮ deploy fit-confidence-2 → DEMO LIVE end-to-end   ──────► L3,L7  ║
+╚═══════════════════════════════╤═══════════════════════════════════╝
+                                ▼
+╔═══════════════════════════════════════════════════════════════════╗
+║ PHASE 5 · POLISH + QUALITY LOOP                                   ║
+╠═══════════════════════════════════════════════════════════════════╣
+║  ⑯ Home dashboard + theme-editor deep link          ──────► L5,L7 ║
+║  ⑰ codegraph FLAG test gap → đóng bằng 4 test                      ║
+║       (vòng lặp tool → action)                      ──────► L6,L3  ║
+║  ⑱ AUDIT coverage: 7 subagent SONG SONG (1/lesson)  ──────► L2,L5 ║
+║  ⑲ đóng gap: code-reviewer agent · Risk Matrix ·                   ║
+║       session-handoff (máy enforce risk)            ──────► L5,L3,L7║
+╚═══════════════════════════════╤═══════════════════════════════════╝
+                                ▼
+                  ┌───────────────────────────────┐
+                  │  XUYÊN SUỐT (mọi phase):       │
+                  │  • externalize state → file    │ ► L7
+                  │  • verify trước, commit theo    │ ► L3
+                  │    nhịp, evidence ≠ lời nói      │
+                  │  • 1 feature/lần, không overreach│ ► L7
+                  └───────────────────────────────┘
+```
+
+### Sơ đồ (Mermaid — dán vào slide/Notion để render)
+
+```mermaid
+flowchart TD
+    subgraph P0["PHASE 0 · Cơ hội & Scope"]
+      A1["① Research + tear-down Kiwi<br/>(L1 prompt/context)"]
+      A2["② /map-feature → cắt scope 4 hub<br/>(L2 planning/delegation)"]
+    end
+    subgraph P1["PHASE 1 · Harness + Guardrails"]
+      B1["③ AGENTS/CLAUDE/feature_list/init.sh<br/>(L7,L5)"]
+      B2["④ hooks + permissions + pre-commit secret<br/>(L4)"]
+      B3["⑤ init.sh → verify-harness<br/>(L3,L7)"]
+    end
+    subgraph P2["PHASE 2 · Design"]
+      C1["⑥ brainstorm → spec → plan + prototype<br/>(L2,L5)"]
+    end
+    subgraph P3["PHASE 3 · Storefront widget"]
+      D1["⑦ recommendSize RED→GREEN<br/>(L3 TDD)"]
+      D2["⑧ theme app block + UI<br/>(L7,L1)"]
+      D3["⑨ deploy fit-confidence-1<br/>(L7)"]
+    end
+    subgraph P4["PHASE 4 · Admin embedded"]
+      E1["⑩ codegraph hiểu code trước extend<br/>(L2,L6)"]
+      E2["⑪ shopify app init → React Router, gộp app/<br/>(L7)"]
+      E3["⑫ validateChart RED→GREEN<br/>(L3)"]
+      E4["⑬ Polaris + app-owned metafield, MCP validate<br/>(L6,L5)"]
+      E5["⑭ debug scope + 3 bug live<br/>(L3)"]
+      E6["⑮ deploy v2 + demo live<br/>(L3,L7)"]
+    end
+    subgraph P5["PHASE 5 · Polish + Quality loop"]
+      F1["⑯ Home dashboard + deep link<br/>(L5,L7)"]
+      F2["⑰ codegraph flag gap → đóng test<br/>(L6,L3)"]
+      F3["⑱ audit 7 subagent song song<br/>(L2,L5)"]
+      F4["⑲ code-reviewer + Risk Matrix + handoff<br/>(L5,L3,L7)"]
+    end
+    A1-->A2-->B1-->B2-->B3-->C1-->D1-->D2-->D3-->E1-->E2-->E3-->E4-->E5-->E6-->F1-->F2-->F3-->F4
+```
+
+### Cheat-sheet — Lesson dùng ở bước nào (để chỉ tay khi thuyết trình)
+
+| Lesson | Xuất hiện ở bước |
+|---|---|
+| **L1** Context Eng | ①, ⑧ |
+| **L2** Planning/Delegation | ②, ⑥, ⑩, ⑱ |
+| **L3** TDD/Verify/Debug | ⑤, ⑦, ⑫, ⑭, ⑮, ⑰, ⑲ ⭐ (nhiều nhất) |
+| **L4** Guardrails/Hooks | ④ |
+| **L5** Skills/CLAUDE/Subagent | ③, ⑥, ⑬, ⑯, ⑱, ⑲ |
+| **L6** MCP | ⑩, ⑬, ⑰ |
+| **L7** Harness/Cross-model | ③, ⑤, ⑧, ⑨, ⑪, ⑮, ⑯, ⑲ |
+
+---
+
 ### Phụ lục — cách demo live (gợi ý 2–3 phút)
 1. `git log --oneline` + chạy `./init.sh` → cho xem **RESULT: PASS** (21/21).
 2. Admin → **Size chart** → sửa 1 dải của M → **Save** (toast). Thử Save sai (min>max) → banner đỏ.
