@@ -14,6 +14,24 @@
 
 **Phạm vi (đủ 2 mặt một Shopify app thật):** storefront (Theme App Extension) **+** admin (embedded React Router app, trang Polaris sửa chart), nối nhau qua **app-owned metafield** (không cần database).
 
+### Cách tìm ra app này (Phase 0 · research → cơ hội) — *evidence cho L1 + L2*
+
+**Prompt research (role + constraint + exclusion)** — đây là prompt/context engineering, không hỏi chung chung:
+
+> *"Bạn là **người làm sản phẩm có nhiều năm kinh nghiệm trên thị trường Shopify**. Hãy nghiên cứu thị trường và tìm các app **tăng conversion rate, giảm churn & return rate** nhưng **kiến trúc đơn giản**. Lưu ý: **không được giống** các app trong hệ sinh thái **Omegatheme**, mà phải **bổ trợ** được cho hệ sinh thái này."*
+
+**Kết quả 1 — funnel 5 app cơ hội** (khảo sát **358K+ stores**): 40% stores chưa có retention tool · quiz conversion 25–40% (so 1.6% trung bình) · **98.1% stores thiếu analytics app**. Top đề xuất:
+
+| App cơ hội | Tác động | Impact / Complexity |
+|---|---|---|
+| **① Size Finder & Fit Guide** | +CR · −Return | **Rất cao / Thấp** ← chọn |
+| ② Back-in-Stock + Wishlist Alerts | +CR · −Churn | Cao / Thấp |
+| ③ Post-Purchase Survey (NPS + Return Reason) | +Retention · −Return | Cao / Rất thấp |
+
+**Kết quả 2 — deep-dive đối thủ** (prompt tiếp: *"phân tích khoảng trống Size Finder & Fit Guide + list app đang có trên Shopify App Store"*): **184+ app** trong category · market leader **Kiwi Sizing 42,977 installs** nhưng **−4% YoY (đang chững)** · fashion return **30% (1/4 do size)**. Kiwi: 4.8★ (1,037), Free–$24.49/mo, ML-based, AI *partial*, **không "Built for Shop"**.
+
+→ **Quyết định chọn Size Finder:** impact rất cao + complexity thấp + **market leader đang chững và còn gap** (built-for-Shop, không watermark) → khe hở entry rõ. *Áp dụng kiến thức TỪ khâu chọn đề tài.*
+
 ---
 
 ## 2. Đã áp dụng kiến thức nào từ khóa học

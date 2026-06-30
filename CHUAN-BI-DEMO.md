@@ -137,7 +137,10 @@ Flow nhỏ nhất demo được end-to-end: *"Buyer: find size"* bám các hub f
 
 > Mỗi slide ~60 giây. Cuối mỗi phần có dòng *"Kiến thức áp dụng"* để giám khảo tick.
 
-**1️⃣ Mục tiêu app** — Size Finder giúp khách chọn đúng size lần đầu → giảm return (fashion ~30%). Bổ trợ Omegatheme, không trùng lặp. *Show:* 5 app cơ hội + Kiwi market data. 🏷️ *Prompt/Context Eng., Delegation, Skill `/map-feature`.*
+**1️⃣ Mục tiêu app** — Size Finder giúp khách chọn đúng size lần đầu → giảm return (fashion ~30%, 1/4 do size). Bổ trợ Omegatheme, không trùng lặp.
+- *Cách tìm ra (prompt research):* role="người làm sản phẩm Shopify nhiều năm" + constraint=tăng CR/giảm churn-return + kiến trúc đơn giản + **exclusion=không giống Omegatheme, phải bổ trợ** → ra **5 app cơ hội** (khảo sát 358K+ stores: 40% chưa có retention tool, 98.1% thiếu analytics).
+- *Chọn Size Finder* (Impact **Rất cao** / Complexity **Thấp**) → deep-dive: **184+ app** category, leader **Kiwi 42,977 installs nhưng −4% YoY (chững)**, Kiwi 4.8★(1037), Free–$24.49/mo, ML-based, **không "Built for Shop"** → khe hở entry.
+- *Show:* 2 ảnh dashboard (5 app cơ hội + Kiwi competitor data). 🏷️ *Prompt/Context Eng. (role+constraint+exclusion), Delegation/Research, Skill `/map-feature`.*
 
 **2️⃣ Đã áp dụng kiến thức nào** — *Show:* `git log` + bảng Phần A + bảng Phần E. 🏷️ *Slide ăn điểm — đi nhanh nhưng đủ; nhấn "evidence là commit thật".*
 
@@ -166,7 +169,7 @@ Flow nhỏ nhất demo được end-to-end: *"Buyer: find size"* bám các hub f
 
 | # | Kiến thức (buổi) | Làm gì trong project | Evidence | Trạng thái |
 |---|---|---|---|---|
-| 1 | **Prompt/Context Eng. (B1)** | Prompt research role + loại trừ Omegatheme; `shopify-conventions.md` | Screenshot prompt + `docs/shopify-conventions.md` | ✅ |
+| 1 | **Prompt/Context Eng. (B1)** | Prompt research role + constraint + **loại trừ Omegatheme** → funnel 5 app cơ hội → deep-dive Kiwi; `shopify-conventions.md` | Ảnh dashboard 5 app + Kiwi competitor data + `docs/shopify-conventions.md` | ✅ |
 | 2 | **Delegation + Skill (B2)** | Web research competitor; chạy `/map-feature` | `outputs/kiwi-sizing-feature-map.html` (`c655976`) | ✅ |
 | 3 | **Planning (B2)** | Đọc dependency hub → cắt scope MVP; **spec + plan** cho cả storefront & admin (`docs/features/size-finder/`) | Feature map + `plans/*.md` + `specs/*.md` | ✅ |
 | 4 | **CLAUDE.md/AGENTS.md (B5,B7)** | Luật dự án + bản đồ repo + iron law/guardrail rules | `CLAUDE.md`, `AGENTS.md` (`01ffd55`,`6848d99`) | ✅ |
