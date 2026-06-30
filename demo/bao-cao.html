@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Báo cáo cuối khóa — Fit Confidence (Size Finder)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root,[data-theme="dark"]{
+    --bg:#0a0f0d;--surface:#0d1411;--surface-2:#111a16;
+    --accent:#4ade80;--accent-2:#6ee7a0;--accent-glow:rgba(74,222,128,.12);
+    --orange:#f5a623;--blue:#6cb3ff;--purple:#c084fc;--red:#f87171;
+    --text:#e8efe9;--text-strong:#fff;--text-2:#b8c4bd;--text-3:#8b9a90;
+    --border:rgba(255,255,255,.1);--box-start:rgba(74,222,128,.06);--box-end:rgba(74,222,128,.02);
+    --hi-bg:rgba(74,222,128,.12);--hi-bd:rgba(74,222,128,.3);
+    --info-bg:rgba(108,179,255,.07);--warn-bg:rgba(245,166,35,.08);--code-bg:#06100b;
+    --grid:rgba(74,222,128,.035);
+  }
+  [data-theme="light"]{
+    --bg:#f5f7f4;--surface:#fff;--surface-2:#eef3ee;
+    --accent:#16a34a;--accent-2:#15803d;--accent-glow:rgba(22,163,74,.14);
+    --orange:#b8740a;--blue:#2563eb;--purple:#7c3aed;--red:#dc2626;
+    --text:#1f2421;--text-strong:#0a0f0d;--text-2:#3a443d;--text-3:#5b6a60;
+    --border:rgba(0,0,0,.12);--box-start:rgba(22,163,74,.08);--box-end:rgba(22,163,74,.02);
+    --hi-bg:rgba(22,163,74,.12);--hi-bd:rgba(22,163,74,.35);
+    --info-bg:rgba(37,99,235,.06);--warn-bg:rgba(184,116,10,.1);--code-bg:#0c1a12;
+    --grid:rgba(22,163,74,.05);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:"JetBrains Mono",monospace;line-height:1.55;overflow:hidden;transition:background .3s,color .3s}
+  body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
+  h1,h2,h3{font-family:"Space Grotesk",sans-serif;color:var(--text-strong);line-height:1.15}
+  strong{color:var(--text-strong)}
+  em{color:var(--text-2);font-style:italic}
+  code{background:var(--code-bg);color:var(--accent-2);padding:1px 6px;border-radius:5px;font-size:.9em}
+
+  .deck{position:relative;width:100vw;height:100vh;z-index:1}
+  .slide{position:absolute;inset:0;padding:clamp(34px,4.5vh,56px) clamp(44px,7vw,110px) 88px;display:none;flex-direction:column;overflow:hidden;background:radial-gradient(ellipse 75% 55% at 12% -5%,var(--accent-glow),transparent 60%)}
+  .slide.active{display:flex;animation:fade .35s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  .kicker{color:var(--accent);font-size:13px;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px}
+  .slide h2{font-size:clamp(26px,3.4vw,40px);margin-bottom:14px}
+  .slide h2 span{color:var(--accent)}
+  .lead{color:var(--text-2);font-size:clamp(15px,1.5vw,19px);max-width:900px}
+  ul{margin:8px 0 8px 22px}.slide li{margin:7px 0;font-size:clamp(14px,1.4vw,17px)}
+
+  .fill{flex:1;display:flex;gap:28px;min-height:0;margin-top:6px}
+  .col{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
+  .center{align-items:center;justify-content:center;text-align:center}
+  figure{margin:0;display:flex;flex-direction:column;min-height:0}
+  figure img{max-height:62vh;max-width:100%;width:auto;margin:0 auto;border:1px solid var(--border);border-radius:12px;box-shadow:0 16px 50px rgba(0,0,0,.4);object-fit:contain}
+  figcaption{color:var(--text-3);font-size:12.5px;margin-top:10px;text-align:center}
+  .two img{max-height:46vh}
+
+  .badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;border:1px solid var(--hi-bd);background:var(--hi-bg);color:var(--accent-2);white-space:nowrap;display:inline-block}
+  .badge.l3{--hi-bd:rgba(245,166,35,.4);--hi-bg:rgba(245,166,35,.12);color:var(--orange)}
+  .badge.l4{--hi-bd:rgba(248,113,113,.4);--hi-bg:rgba(248,113,113,.12);color:var(--red)}
+  .badge.l6{--hi-bd:rgba(192,132,252,.4);--hi-bg:rgba(192,132,252,.12);color:var(--purple)}
+  .pill{border:1px solid var(--hi-bd);background:var(--hi-bg);color:var(--accent-2);border-radius:20px;padding:5px 14px;font-size:13px;font-weight:500}
+  .pills{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}
+
+  .step{display:flex;gap:11px;align-items:baseline;margin:7px 0;padding:8px 13px;border-radius:9px;background:var(--surface);border:1px solid var(--border);font-size:clamp(13px,1.35vw,16px)}
+  .step .n{flex:none;color:var(--accent);font-weight:700}
+  .step .b{flex:1}.step .badge{margin-left:auto}
+  .box{padding:14px 18px;border-radius:11px;border:1px solid var(--border);background:linear-gradient(180deg,var(--box-start),var(--box-end));font-size:clamp(13px,1.35vw,16px)}
+  .box.info{background:var(--info-bg);border-color:rgba(108,179,255,.25)}
+  .box.warn{background:var(--warn-bg);border-color:rgba(245,166,35,.3)}
+  .box .lbl{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-3);display:block;margin-bottom:6px}
+  .take{border-left:3px solid var(--accent);padding:11px 16px;background:var(--box-start);border-radius:0 9px 9px 0;font-size:clamp(13px,1.4vw,16px);margin-top:14px}
+  .take b{color:var(--accent-2)}
+  .thesis{padding:18px 22px;border-left:3px solid var(--accent);background:linear-gradient(90deg,var(--box-start),var(--box-end));border-radius:0 12px 12px 0;font-size:clamp(15px,1.5vw,19px);max-width:960px}
+  table{border-collapse:collapse;font-size:clamp(12px,1.3vw,15px);width:100%}
+  th,td{border:1px solid var(--border);padding:7px 11px;text-align:left}
+  th{background:var(--surface-2);color:var(--text-strong);font-family:"Space Grotesk"}
+  pre{background:var(--code-bg);border:1px solid var(--border);border-radius:11px;padding:18px 22px;font-size:clamp(13px,1.4vw,17px);line-height:1.7;white-space:pre-wrap}
+  .ok{color:var(--accent)}.wc{color:var(--orange)}.cmd{color:var(--blue)}.dim{color:var(--text-3)}
+  .q{display:inline-block;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:1px 8px;font-size:12px;color:var(--text-3);margin:3px 4px 3px 0}
+
+  /* footer HUD */
+  .deck-footer{position:fixed;bottom:0;left:0;right:0;z-index:10;display:grid;grid-template-columns:1fr minmax(180px,460px) 1fr;align-items:center;gap:18px;padding:12px clamp(18px,2vw,30px) 14px;pointer-events:none}
+  .deck-footer>*{pointer-events:auto}
+  .hint{font-size:11.5px;color:var(--text-3);justify-self:start}
+  .hint kbd{background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:2px 6px;font-family:inherit;font-size:11px;color:var(--text-2)}
+  .progress-track{justify-self:stretch;height:4px;border-radius:999px;background:var(--surface-2);border:1px solid var(--border);overflow:hidden}
+  .progress{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:width .3s}
+  .footer-right{justify-self:end;display:flex;align-items:center;gap:12px}
+  .slide-counter{font-size:12.5px;color:var(--text-2);white-space:nowrap}
+  .slide-counter .ses{color:var(--accent);font-weight:700}.slide-counter .cur{color:var(--text);font-weight:700}.slide-counter .sep{color:var(--text-3);margin:0 3px}
+  .nav-btn{width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:var(--surface);color:var(--text-2);border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:20px;cursor:pointer;transition:.15s}
+  .nav-btn:hover{background:var(--surface-2);color:var(--text);border-color:var(--accent)}
+  .nav-btn:disabled{opacity:.35;cursor:default}
+  @media(max-width:760px){.fill{flex-direction:column;gap:14px}.hint{display:none}}
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+  <!-- 1 · TITLE -->
+  <section class="slide center" style="text-align:center">
+    <div class="kicker">Demo Shopify App · Báo cáo cuối khóa</div>
+    <h2 style="font-size:clamp(34px,6vw,64px)">📏 Fit Confidence — <span>Size Finder</span></h2>
+    <p class="lead" style="margin:16px auto 0">Shopify app nhỏ nhưng <strong>thật &amp; demo được</strong> — widget "Find my size" giúp khách chọn đúng size lần đầu. Điểm nhấn: <strong>áp dụng kiến thức khóa học xuyên suốt vòng đời sản phẩm</strong>.</p>
+    <div class="pills" style="justify-content:center">
+      <span class="pill">21/21 test ✓</span><span class="pill">Deployed · v3</span>
+      <span class="pill">Storefront + Admin</span><span class="pill">Demo live</span>
+    </div>
+  </section>
+
+  <!-- 2 · THESIS / ROADMAP -->
+  <section class="slide">
+    <div class="kicker">Câu chốt</div>
+    <h2>Áp dụng kiến thức <span>theo đúng thứ tự vòng đời</span></h2>
+    <div class="thesis">L1/L2 tìm cơ hội &amp; cắt scope · <strong>L4/L7 dựng nền an toàn TRƯỚC khi code</strong> · L3 xuyên suốt phần code · L5/L6 cho tooling &amp; mở rộng — <strong>chứ không "làm app xong mới gắn nhãn kiến thức"</strong>.</div>
+    <div class="fill" style="margin-top:24px">
+      <div class="col" style="justify-content:flex-start">
+        <table>
+          <tr><th>Phase</th><th>Làm gì</th><th>Lesson</th></tr>
+          <tr><td><strong>0</strong></td><td>Tìm cơ hội &amp; cắt scope</td><td>L1 · L2</td></tr>
+          <tr><td><strong>1</strong></td><td>Dựng harness + guardrails</td><td>L7 · L5 · L4 · L3</td></tr>
+          <tr><td><strong>2</strong></td><td>Design — spec/plan/prototype</td><td>L2 · L5</td></tr>
+          <tr><td><strong>3</strong></td><td>Build storefront (TDD)</td><td>L3 · L7</td></tr>
+          <tr><td><strong>4</strong></td><td>Build admin + metafield + debug</td><td>L3 · L6 · L5 · L7</td></tr>
+          <tr><td><strong>5</strong></td><td>Polish + quality loop</td><td>L5 · L3 · L2</td></tr>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 · DESTINATION -->
+  <section class="slide">
+    <div class="kicker">Câu hỏi 1 · Mục tiêu (điểm đến)</div>
+    <h2>App làm gì &amp; kết quả</h2>
+    <p class="lead">Thời trang đổi/trả ~30% do <strong>chọn sai size</strong>. Fit Confidence đủ <strong>2 mặt</strong>: storefront widget + admin Polaris, nối qua <strong>app-owned metafield</strong> — không database.</p>
+    <div class="fill two">
+      <figure><img src="screenshots/11b-storefront-result-M.png" alt=""><figcaption>Storefront thật: 176/72 → <strong>M</strong> + lý do</figcaption></figure>
+      <figure><img src="screenshots/08-admin-sizechart-live.png" alt=""><figcaption>Admin: merchant tự sửa size chart</figcaption></figure>
+    </div>
+  </section>
+
+  <!-- 4 · PHASE 0 research -->
+  <section class="slide">
+    <div class="kicker">Phase 0 · Tìm cơ hội</div>
+    <h2>Research — prompt có <span>role + constraint + exclusion</span> <span class="badge">L1</span> <span class="badge">L2</span></h2>
+    <div class="box" style="margin-bottom:8px"><em>"Bạn là <strong>người làm sản phẩm nhiều năm trên Shopify</strong>. Tìm app <strong>tăng CR, giảm churn &amp; return</strong> nhưng <strong>kiến trúc đơn giản</strong>. <strong>Không giống</strong> Omegatheme mà phải <strong>bổ trợ</strong> được."</em></div>
+    <div class="fill two">
+      <figure><img src="screenshots/09-research-5apps.png" alt=""><figcaption>358K+ stores → 5 app cơ hội → chọn <strong>Size Finder</strong> (Impact Rất cao / Complexity Thấp)</figcaption></figure>
+      <figure><img src="screenshots/10-research-kiwi.png" alt=""><figcaption>184+ app · Kiwi 42,977 installs <strong>−4% YoY</strong> · còn gap "Built for Shop"</figcaption></figure>
+    </div>
+  </section>
+
+  <!-- 5 · PHASE 0 feature map -->
+  <section class="slide">
+    <div class="kicker">Phase 0 · Cắt scope</div>
+    <h2><code>/map-feature</code> → đọc độ phức tạp <span class="badge">L2</span></h2>
+    <div class="fill"><figure style="flex:1"><img src="screenshots/01-feature-map.png" alt="" style="max-height:64vh"><figcaption>Dependency map đối thủ: 5 layer · 31 feature · rating <strong>Complex 10/12</strong> → cắt scope còn 4 hub lõi</figcaption></figure></div>
+    <div class="take"><b>Takeaway:</b> chọn đề tài có cơ sở dữ liệu (impact cao · complexity thấp · leader đang chững), không cảm tính.</div>
+  </section>
+
+  <!-- 6 · PHASE 1 harness -->
+  <section class="slide">
+    <div class="kicker">Phase 1 · Trước khi code</div>
+    <h2>Dựng <span>harness + guardrails</span></h2>
+    <div class="fill">
+      <div class="col">
+        <div class="step"><span class="n">③</span><span class="b">AGENTS.md / CLAUDE.md / feature_list.json / init.sh / progress</span><span class="badge">L7·L5</span></div>
+        <div class="step"><span class="n">④</span><span class="b">hooks chặn lệnh + permissions + pre-commit secret + chống injection</span><span class="badge l4">L4</span></div>
+        <div class="step"><span class="n">⑤</span><span class="b">init.sh chạy verify-harness (artifact + schema + hook self-test)</span><span class="badge l3">L3·L7</span></div>
+        <div class="box info" style="margin-top:12px"><span class="lbl">AI hỗ trợ phần nào</span>AI dựng scaffold; <strong>tôi = PM + reviewer</strong> — dựng guardrails để AI không phá, đòi evidence trước khi nhận "done".</div>
+      </div>
+      <figure class="col"><img src="screenshots/15-initsh-pass.png" alt=""><figcaption><code>./init.sh</code> → <strong>RESULT: PASS</strong></figcaption></figure>
+    </div>
+  </section>
+
+  <!-- 7 · PHASE 2 design -->
+  <section class="slide">
+    <div class="kicker">Phase 2 · Thiết kế</div>
+    <h2>Design — <span>artifact bền, không chat</span> <span class="badge">L2</span> <span class="badge">L5</span></h2>
+    <p class="lead">⑥ brainstorm → <strong>spec</strong> → <strong>plan</strong> (+ prototype UI) — lưu thành file, là "hợp đồng" trước khi code.</p>
+    <div class="fill two">
+      <figure><img src="screenshots/02-prototype-widget.png" alt=""><figcaption>Prototype storefront</figcaption></figure>
+      <figure><img src="screenshots/03-prototype-admin.png" alt=""><figcaption>Prototype admin editor</figcaption></figure>
+    </div>
+  </section>
+
+  <!-- 8 · PHASE 3 storefront -->
+  <section class="slide">
+    <div class="kicker">Phase 3 · Code storefront</div>
+    <h2>Build Size Finder widget — <span>TDD</span> <span class="badge l3">L3 ⭐</span></h2>
+    <div class="fill">
+      <div class="col">
+        <div class="step"><span class="n">⑦</span><span class="b"><code>recommendSize()</code> RED → GREEN → REFACTOR (exact/validation/out-of-range/fit) · 11 test</span></div>
+        <div class="step"><span class="n">⑧</span><span class="b">theme app block + modal UI (ReAct loop)</span></div>
+        <div class="step"><span class="n">⑨</span><span class="b">shopify app build OK → deploy v1</span></div>
+        <div class="take"><b>Takeaway:</b> test viết TRƯỚC → khóa hành vi, chống AI bịa công thức sizing.</div>
+      </div>
+      <figure class="col"><img src="screenshots/16-npm-test.png" alt=""><figcaption><code>npm test</code> — lõi test-first</figcaption></figure>
+    </div>
+  </section>
+
+  <!-- 9 · PHASE 4 admin -->
+  <section class="slide">
+    <div class="kicker">Phase 4 · Code admin</div>
+    <h2>Embedded app + <span>app-owned metafield</span></h2>
+    <div class="fill">
+      <div class="col">
+        <div class="step"><span class="n">⑩</span><span class="b"><strong>codegraph</strong>: HIỂU code trước khi extend + blast-radius</span><span class="badge l6">L2·L6</span></div>
+        <div class="step"><span class="n">⑪</span><span class="b">shopify app init → React Router app, gộp 1 app</span><span class="badge">L7</span></div>
+        <div class="step"><span class="n">⑫</span><span class="b"><code>validateChart()</code> RED → GREEN</span><span class="badge l3">L3⭐</span></div>
+        <div class="step"><span class="n">⑬</span><span class="b">Polaris + metafield <code>$app:fit_confidence</code> · validate qua MCP skills</span><span class="badge l6">L6·L5</span></div>
+      </div>
+      <figure class="col"><img src="screenshots/18-codegraph.png" alt=""><figcaption>codegraph blast-radius (MCP)</figcaption></figure>
+    </div>
+  </section>
+
+  <!-- 10 · PHASE 4 debug (kho khan) -->
+  <section class="slide">
+    <div class="kicker">Câu hỏi 5 · Khó khăn &amp; cách xử lý</div>
+    <h2>Debug thật — <span>không đoán mò</span> <span class="badge l3">L3 ⭐</span></h2>
+    <div class="box warn">
+      <ul style="margin-left:18px">
+        <li><strong>Metafield scope</strong>: <code>write_metafields</code> bị bỏ → hiểu merchant-owned cần scope, <strong>app-owned <code>$app</code> thì không</strong> → đổi reserved namespace.</li>
+        <li><strong>3 bug live</strong> (reproduce → root cause → fix → regression test): query bị <code>#</code> comment hết dòng · <code>document.currentScript</code> null trong module · theme-check literal <code>&lt;script</code>.</li>
+        <li><strong>Chọn đúng tool/skill</strong>: design-prototype khóa Polaris → tự author; codegraph overkill app nhỏ → dùng <strong>chọn lọc</strong>.</li>
+      </ul>
+    </div>
+    <div class="take"><b>Takeaway:</b> mỗi bug = reproduce + root cause + (nơi được) regression test. Judgment: biết khi nào KHÔNG dùng tool nặng.</div>
+  </section>
+
+  <!-- 11 · PHASE 5 polish -->
+  <section class="slide">
+    <div class="kicker">Phase 5 · Polish + quality loop</div>
+    <h2>Hoàn thiện &amp; <span>tự kiểm chứng</span></h2>
+    <div class="fill">
+      <div class="col">
+        <div class="step"><span class="n">⑯</span><span class="b">Home dashboard + theme-editor deep link</span><span class="badge">L5·L7</span></div>
+        <div class="step"><span class="n">⑰</span><span class="b">codegraph FLAG test gap → đóng bằng test (tool→action)</span><span class="badge l6">L6·L3</span></div>
+        <div class="step"><span class="n">⑱</span><span class="b"><strong>AUDIT: 7 subagent SONG SONG</strong> (1/lesson)</span><span class="badge">L2·L5</span></div>
+        <div class="step"><span class="n">⑲</span><span class="b">đóng gap: code-reviewer agent · Risk Matrix · handoff</span><span class="badge l3">L5·L3·L7</span></div>
+      </div>
+      <figure class="col"><img src="screenshots/12-dev-dashboard-v3.png" alt=""><figcaption>fit-confidence-3 <strong>Active</strong></figcaption></figure>
+    </div>
+  </section>
+
+  <!-- 12 · XUYEN SUOT -->
+  <section class="slide">
+    <div class="kicker">Xuyên suốt mọi phase</div>
+    <h2>Nguyên tắc giữ AI <span>đúng hướng</span></h2>
+    <div class="fill">
+      <div class="col">
+        <ul>
+          <li><strong>Externalize state → file</strong> (progress, feature_list) <span class="badge">L7</span></li>
+          <li><strong>Verify trước · commit theo nhịp · evidence ≠ lời nói</strong> <span class="badge l3">L3</span></li>
+          <li><strong>1 feature/lần · không overreach</strong> <span class="badge">L7</span></li>
+        </ul>
+      </div>
+      <figure class="col"><img src="screenshots/17-git-log.png" alt=""><figcaption>"Done = evidence (commit + raw output), không phải AI nói xong"</figcaption></figure>
+    </div>
+  </section>
+
+  <!-- 12b · Q3 · AI HO TRO -->
+  <section class="slide">
+    <div class="kicker">Câu hỏi 3 · AI hỗ trợ</div>
+    <h2>AI hỗ trợ phần nào — tôi giữ vai <span>PM + reviewer</span></h2>
+    <div class="fill">
+      <div class="col">
+        <div class="box"><span class="lbl">AI (Claude Code) làm</span>research thị trường · brainstorm spec/plan · generate widget + admin · viết test · debug · tự-audit coverage (7 subagent).</div>
+        <div class="box info" style="margin-top:14px"><span class="lbl">Ranh giới — tôi quyết &amp; kiểm</span><strong>Tôi quyết hướng + chọn scope + dựng guardrails để AI không phá + đòi evidence trước khi nhận "done"</strong> → đổi vai <strong>coder → PM</strong>.</div>
+      </div>
+      <div class="col">
+        <div class="box"><span class="lbl">Ví dụ ReAct loop (lúc debug)</span>
+<pre style="margin:8px 0 0;font-size:clamp(13px,1.4vw,17px)">đọc stack trace
+   ↓
+tìm <span class="ok">root cause</span>
+   ↓
+sửa code
+   ↓
+chạy <span class="ok">test ✓</span> → commit (evidence)</pre></div>
+      </div>
+    </div>
+    <div class="take"><b>Takeaway:</b> AI tăng tốc, nhưng <strong>người giữ vô-lăng</strong> — guardrail + verification giữ AI đúng hướng, không "nhờ AI viết hộ rồi tin".</div>
+  </section>
+
+  <!-- 13 · KET QUA -->
+  <section class="slide">
+    <div class="kicker">Câu hỏi 4 · Kết quả</div>
+    <h2>Kết quả đạt được</h2>
+    <div class="fill">
+      <div class="col">
+        <ul>
+          <li><strong>Chạy thật end-to-end</strong>: admin Save → widget storefront đổi gợi ý.</li>
+          <li><code>npm test</code> <strong>21/21</strong> · build OK · <code>./init.sh</code> → <strong>PASS</strong>.</li>
+          <li><strong>Deployed</strong> <code>fit-confidence-3</code> — widget chạy trên CDN, không cần server.</li>
+          <li>3 màn: Home · Size chart · widget. Lưu qua <strong>metafield, không DB</strong>.</li>
+        </ul>
+      </div>
+      <figure class="col"><img src="screenshots/11-storefront-live.png" alt=""><figcaption>Storefront thật — "Find my size"</figcaption></figure>
+    </div>
+  </section>
+
+  <!-- 14 · CHEAT SHEET -->
+  <section class="slide">
+    <div class="kicker">Câu hỏi 2 · Bản đồ kiến thức</div>
+    <h2>Lesson dùng ở bước nào</h2>
+    <div class="fill"><div class="col" style="justify-content:flex-start">
+      <table>
+        <tr><th>Lesson</th><th>Chủ đề</th><th>Xuất hiện ở bước</th></tr>
+        <tr><td><strong>L1</strong></td><td>Context Engineering</td><td>① ⑧</td></tr>
+        <tr><td><strong>L2</strong></td><td>Planning / Delegation</td><td>② ⑥ ⑩ ⑱</td></tr>
+        <tr><td><strong>L3</strong> ⭐</td><td>TDD / Verify / Debug</td><td>⑤ ⑦ ⑫ ⑭ ⑮ ⑰ ⑲ <em>(nhiều nhất)</em></td></tr>
+        <tr><td><strong>L4</strong></td><td>Guardrails / Hooks</td><td>④</td></tr>
+        <tr><td><strong>L5</strong></td><td>Skills / CLAUDE / Subagent</td><td>③ ⑥ ⑬ ⑯ ⑱ ⑲</td></tr>
+        <tr><td><strong>L6</strong></td><td>MCP</td><td>⑩ ⑬ ⑰</td></tr>
+        <tr><td><strong>L7</strong></td><td>Harness / Cross-model</td><td>③ ⑤ ⑧ ⑨ ⑪ ⑮ ⑯ ⑲</td></tr>
+      </table>
+    </div></div>
+  </section>
+
+  <!-- 15 · BAI HOC -->
+  <section class="slide">
+    <div class="kicker">Câu hỏi 6</div>
+    <h2>Bài học rút ra</h2>
+    <ul style="font-size:clamp(15px,1.6vw,20px);margin-top:10px">
+      <li><strong>Áp dụng kiến thức TỪ khâu chọn đề tài</strong> — đọc dependency map để cắt scope.</li>
+      <li><strong>Plan kỹ + có test → AI nhanh &amp; đáng tin hơn</strong> — test/verification là "hợp đồng".</li>
+      <li><strong>Harness + guardrails giữ AI không đi lạc / không phá.</strong></li>
+      <li><strong>Done = evidence, không phải lời nói.</strong></li>
+      <li><strong>Judgment ngang công cụ</strong> — biết khi nào dùng (và KHÔNG dùng) tool/skill.</li>
+    </ul>
+  </section>
+
+  <!-- 16 · DEMO SCRIPT -->
+  <section class="slide">
+    <div class="kicker">Phụ lục</div>
+    <h2>Kịch bản demo live (2–3')</h2>
+    <pre><span class="cmd">1.</span> git log --oneline + ./init.sh   → <span class="ok">RESULT: PASS (21/21)</span>
+<span class="cmd">2.</span> Admin → Size chart → sửa dải M → Save (toast)
+       Save sai (min&gt;max) → <span class="wc">banner đỏ</span>
+<span class="cmd">3.</span> Storefront → Find my size → nhập số đo → ra size + lý do
+<span class="cmd">4.</span> (tùy chọn) codegraph_explore → blast-radius</pre>
+    <div class="box info" style="margin-top:14px"><span class="lbl">Nhớ</span><strong>Admin</strong> cần <code>shopify app dev</code> (App URL = tunnel) · <strong>storefront widget</strong> chạy độc lập trên CDN.</div>
+  </section>
+
+  <!-- 17 · CLOSING -->
+  <section class="slide center" style="text-align:center">
+    <div class="kicker">Cảm ơn</div>
+    <h2 style="font-size:clamp(28px,4.5vw,52px)">Done = <span>evidence</span>, không phải "AI nói xong"</h2>
+    <p class="lead" style="margin:16px auto 0">Fit Confidence — Size Finder · repo dựng theo mô hình <strong>harness 5-subsystem</strong> · áp dụng kiến thức xuyên suốt vòng đời.</p>
+    <div class="pills" style="justify-content:center"><span class="pill">21/21 ✓</span><span class="pill">7 lesson phủ trọn</span><span class="pill">live demo</span></div>
+  </section>
+
+</div>
+
+<div class="deck-footer">
+  <div class="hint"><kbd>←</kbd> <kbd>→</kbd> chuyển slide · <kbd>F</kbd> fullscreen · <kbd>T</kbd> sáng/tối · <kbd>1-9</kbd> nhảy slide</div>
+  <div class="progress-track"><div class="progress" id="progress"></div></div>
+  <div class="footer-right">
+    <span class="slide-counter" id="counter"><span class="ses">Báo cáo</span><span class="sep">·</span><span class="cur">01</span> / <span class="tot">01</span></span>
+    <div class="nav-arrows">
+      <button class="nav-btn" id="prev" title="Slide trước (←)">‹</button>
+      <button class="nav-btn" id="next" title="Slide sau (→)">›</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  const prog=document.getElementById('progress');
+  const cur=document.querySelector('#counter .cur'), tot=document.querySelector('#counter .tot');
+  const navPrev=document.getElementById('prev'), navNext=document.getElementById('next');
+  let i=0;
+  function upd(){tot.textContent=String(slides.length).padStart(2,'0');cur.textContent=String(i+1).padStart(2,'0');
+    navPrev.disabled=i<=0;navNext.disabled=i>=slides.length-1;}
+  function show(n){if(n<0||n>=slides.length)return;slides[i].classList.remove('active');i=n;slides[i].classList.add('active');
+    prog.style.width=((i+1)/slides.length*100)+'%';upd();try{history.replaceState(null,'','#'+(i+1))}catch(_){}}
+  function next(){show(i+1)}function prev(){show(i-1)}
+  navPrev.onclick=prev;navNext.onclick=next;
+  function toggleTheme(){const r=document.documentElement;r.setAttribute('data-theme',r.getAttribute('data-theme')==='dark'?'light':'dark')}
+  let buf='',t=null;
+  function jump(){const n=parseInt(buf,10);buf='';if(!isNaN(n)&&n>=1)show(Math.min(n,slides.length)-1)}
+  addEventListener('keydown',e=>{const tag=(e.target.tagName||'').toLowerCase();if(tag==='input'||tag==='textarea')return;
+    if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();next()}
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();prev()}
+    else if(e.key==='Home')show(0); else if(e.key==='End')show(slides.length-1);
+    else if(e.key==='f'||e.key==='F'){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}
+    else if(e.key==='t'||e.key==='T')toggleTheme();
+    else if(/^[0-9]$/.test(e.key)){buf+=e.key;clearTimeout(t);t=setTimeout(jump,600)}
+    else if(e.key==='Enter'&&buf){clearTimeout(t);jump()}});
+  const h=parseInt(location.hash.slice(1),10);show(!isNaN(h)&&h>=1?h-1:0);
+</script>
+</body>
+</html>
