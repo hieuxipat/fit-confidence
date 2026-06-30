@@ -26,13 +26,11 @@
 | `10-research-kiwi.png` | **Research**: deep-dive Kiwi competitor (184+ app, 42,977 installs, −4% YoY, bảng so sánh) | **Mục 1** ⭐ | **L1, L2** |
 | `12-dev-dashboard-v3.png` | **LIVE**: dev dashboard — version `fit-confidence-3` **Active** (scopes read_products, extension UID khớp deep-link) | Mục 4 / Mục 7 | L7 |
 
-## Còn thiếu (4 ảnh terminal — tôi tự render được)
+| `15-initsh-pass.png` | **Terminal card**: `./init.sh` → `RESULT: PASS` (21/21 + harness checks) | **Mục 4** ⭐ | L3, L7 |
+| `16-npm-test.png` | **Terminal card**: `npm test` → 21 passed (3 suites) | Mục 4 | L3 |
+| `17-git-log.png` | **Terminal card**: `git log --oneline` — commit history | Mục 2 | L7 |
+| `18-codegraph.png` | **Terminal card**: `codegraph_explore` blast-radius + `impact` | Mục 7, Mục 5 | L6 |
 
-| Ảnh | Nội dung thật | Dùng cho | Lesson |
-|---|---|---|---|
-| `15-initsh-pass.png` | `./init.sh` → `RESULT: PASS` + `npm test 21/21` | **Mục 4** ⭐ | L3, L7 |
-| `16-npm-test.png` | `npm test` → 21 passed | Mục 4 | L3 |
-| `17-git-log.png` | `git log --oneline` (commit history) | Mục 2 | L7 |
-| `18-codegraph.png` | `codegraph_explore` blast-radius | Mục 7, Mục 5 | L6 |
+> Ảnh 15–18 render từ **output terminal thật** thành "terminal card" (playwright over local HTTP), không cần chụp tay.
 
-> Đây là output terminal (không phải web page) — sẽ render thành ảnh "terminal card" bằng playwright khi cần.
+## ✅ Đủ bộ — 18 ảnh phủ trọn 6 mục + luồng build (xem cột "Mục / Lesson").
